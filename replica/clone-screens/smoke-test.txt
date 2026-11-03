@@ -1,0 +1,30 @@
+# Smoke test du clone (M1 — tranche verticale COD), 2026-11-03
+# Serveur: npx next start -p 3000 -H 0.0.0.0 (build de production)
+# DB: PGlite socket 127.0.0.1:5433 (dataDir /home/user/.pglite-data), schema replica/schema.sql + seed
+# Hôtes: Host: boutique-a.localhost:3000 (storefront A), boutique-b.localhost:3000 (B), app.localhost:3000 (dashboard)
+
+1. Storefront boutique-a GET / ............................ 200 (home FR), cookie locale=ar -> lang="ar" dir="rtl"
+2. GET /api/public/stores/boutique-a ....................... 200 {"Boutique Démo A", categories:[Divers]}
+3. GET /api/public/stores/boutique-a/products .............. A: "Produit démo boutique-a" / B: "Produit démo boutique-b" (isolation OK)
+4. GET .../delivery-fee?governorate=tunis -> {"feeMinor":5000} ; sfax -> 7000
+5. POST /api/public/stores/boutique-a/orders (Idempotency-Key: smoke-key-001)
+   -> 201 {"number":"CMD-000003","totalMinor":163000,"status":"new"} (2x79000 + 5000 livraison)
+   replay même clé -> 201 même commande (idempotent) ; stock produit 25 -> 23
+6. Rate limit: 5 POST OK puis 429 {"error":"TOO_MANY_REQUESTS"} (règle IP 5/10min)
+7. Login: GET /api/auth/csrf -> POST /api/auth/callback/credentials (demo@exemple.tn / demo1234)
+   -> 302 + cookie session JWT host-only ; GET /api/auth/session -> user OK
+8. GET /api/stores -> boutique-a + boutique-b ; cookie store_id=A:
+   /api/orders -> 5 commandes (A) ; cookie store_id=B -> [] (isolation multi-store OK)
+   /api/dashboard/stats -> A: ordersTotal 5 ; B: 0
+9. Cycle statuts CMD-000003: new -> to_confirm (200) -> confirmed (200)
+   -> POST /api/orders/[id]/ship {carrierId: sim-standard} -> 200 tracking SIM-000003-0KVQQF
+   -> delivered (200) ; état final: status=delivered, paymentStatus=paid
+   transition interdite (delivered direct depuis confirmed) -> 409 INVALID_TRANSITION
+10. Appels: 3x POST /api/orders/[id]/calls {"outcome":"no_answer"} -> status=unreachable (auto)
+11. Retour: shipped -> returned (200), restocked=true, stock 19 -> 20 ; double retour -> 409
+12. Suivi public: GET /api/public/orders/CMD-000003?phone=+21698123456&slug=boutique-a -> 200 (données masquées, historique)
+    mauvais téléphone -> 404
+13. Blocage: POST /api/blocked-phones {+21698111222} -> commande avec ce tél -> 403 PHONE_BLOCKED
+14. Pages: shop / /product/[id] /category/divers /cart /checkout /order/CMD-000003 -> 200
+    app /app/login /app/signup -> 200 ; sans session /app* -> 307 /app/login ; avec session dashboard/orders/products/settings/delivery -> 200
+15. Téléphone invalide -> 400 PHONE_INVALID ; gouvernorat invalide -> 400 INVALID_FORM

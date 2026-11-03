@@ -1,0 +1,83 @@
+/* ============================================================================
+   tailwind-theme.css — intégration Tailwind v4 (CSS-first) des tokens.
+   Usage: un seul fichier CSS racine pour l'app:
+     @import "tailwindcss";
+     @import "./tokens.css";
+     @import "./tailwind-theme.css";
+   Les composants utilisent ensuite des classes à rôles: bg-surface,
+   text-muted, border-border, bg-accent, text-on-accent, rounded-md...
+   jamais de hex en dur.
+   ========================================================================== */
+
+@theme inline {
+  /* couleurs -> utilitaires bg-*, text-*, border-*, ring-*, fill-* */
+  --color-bg: var(--bg);
+  --color-canvas: var(--bg);            /* alias lisible: bg-canvas */
+  --color-surface: var(--surface);
+  --color-surface-subtle: var(--surface-subtle);
+  --color-border: var(--border);
+  --color-border-input: var(--border-input);
+  --color-text: var(--text);
+  --color-text-muted: var(--text-muted);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-soft: var(--accent-soft);
+  --color-on-accent: var(--on-accent);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+
+  --color-status-new: var(--status-new);
+  --color-status-new-soft: var(--status-new-soft);
+  --color-status-to-confirm: var(--status-to_confirm);
+  --color-status-to-confirm-soft: var(--status-to_confirm-soft);
+  --color-status-unreachable: var(--status-unreachable);
+  --color-status-unreachable-soft: var(--status-unreachable-soft);
+  --color-status-confirmed: var(--status-confirmed);
+  --color-status-confirmed-soft: var(--status-confirmed-soft);
+  --color-status-shipped: var(--status-shipped);
+  --color-status-shipped-soft: var(--status-shipped-soft);
+  --color-status-delivered: var(--status-delivered);
+  --color-status-delivered-soft: var(--status-delivered-soft);
+  --color-status-returned: var(--status-returned);
+  --color-status-returned-soft: var(--status-returned-soft);
+  --color-status-cancelled: var(--status-cancelled);
+  --color-status-cancelled-soft: var(--status-cancelled-soft);
+
+  /* polices */
+  --font-sans: var(--font-sans);
+  --font-arabic: var(--font-arabic);
+  --font-mono: var(--font-mono);
+
+  /* typo -> text-xs/sm/base/lg/xl/display (+ line-height via --text-*--line-height) */
+  --text-xs: var(--text-xs);       --text-xs--line-height: var(--text-xs--line-height);
+  --text-sm: var(--text-sm);       --text-sm--line-height: var(--text-sm--line-height);
+  --text-base: var(--text-base);   --text-base--line-height: var(--text-base--line-height);
+  --text-lg: var(--text-lg);       --text-lg--line-height: var(--text-lg--line-height);
+  --text-xl: var(--text-xl);       --text-xl--line-height: var(--text-xl--line-height);
+  --text-display: var(--text-display); --text-display--line-height: var(--text-display--line-height);
+
+  /* rayons -> rounded-sm/md/lg ; pill = rounded-full */
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+
+  /* ombres -> shadow-card / shadow-pop */
+  --shadow-card: var(--shadow-card);
+  --shadow-pop: var(--shadow-pop);
+
+  /* motion -> duration-fast/base + ease-brand */
+  --transition-duration-fast: var(--duration-fast);
+  --transition-duration-base: var(--duration-base);
+  --transition-timing-function-brand: var(--ease-brand);
+
+  /* grille d'espacement: celle de Tailwind (base 4px) correspond à
+     tokens.space [0,4,8,12,16,24,32,48,64] -> utiliser space-1..space-16
+     (jamais de valeur arbitraire). Cibles tactiles >= 44px (h-11 min). */
+}
+
+/* RTL: jamais de left/right en dur — utiliser ms-/me-/ps-/pe-/start-/end-.
+   Icônes directionnelles: classe flip-rtl (voir tokens.css). */

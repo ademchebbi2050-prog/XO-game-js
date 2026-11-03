@@ -1,0 +1,22 @@
+@import "tailwindcss";
+@import "../styles/tokens.css";
+@import "../styles/tailwind-theme.css";
+
+@layer base {
+  html {
+    font-family: var(--font-sans);
+  }
+  html[lang="ar"] {
+    font-family: var(--font-arabic);
+  }
+  body {
+    background-color: var(--bg);
+    color: var(--text);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}

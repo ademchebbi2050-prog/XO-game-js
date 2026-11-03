@@ -1,0 +1,56 @@
+feature,area,priority,original,clone,notes
+"Inscription commerçant (email + mot de passe, session persistante)",onboarding,must,yes,yes,"S01/S02, changelog 'persistant session'"
+"Onboarding en 4 étapes (compte, design boutique, produits, résultats)",onboarding,must,yes,yes,"S03, landing 'quatre étapes simples'"
+Choix de thème parmi une galerie nommée + éditeur visuel no-code,storefront,must,yes,no,"S14, thèmes propres requis (clean-room), pas ceux de Converty"
+Sous-domaine gratuit + connexion domaine personnalisé,storefront,must,yes,partial,"FAQ landing, S15"
+Publication de la boutique en < 30 min,storefront,must,yes,yes,claim landing; KPI à battre
+Accueil boutique avec bannières et mise en avant,storefront,must,yes,partial,S19
+Catalogue / catégories avec filtres et pagination,storefront,must,yes,partial,S20
+"Page produit (galerie, prix, variantes, badge stock)",storefront,must,yes,partial,S21
+Panier avec quantités et total,storefront,must,yes,yes,S22
+"Checkout multi-étapes: contact, adresse/gouvernorat, livraison, paiement",checkout,must,yes,partial,S23
+Paiement à la livraison (COD) natif,payments,must,yes,yes,>70% des transactions en TN; cœur du positionnement
+"Paiement en ligne par carte (via PSP licenciés: Flouci, Paymee, CIB...)",payments,must,yes,no,"on intègre des PSP existants, pas de licence propre"
+"Code promo / coupon (%, fixe, limites, expiration)",checkout,should,yes,no,"changelog v2.5.7, S22/S23/S08"
+Champs de checkout personnalisés (activés/désactivés par produit),checkout,should,yes,no,changelog Play 'product-specific checkout fields'
+Page de confirmation + suivi de commande client,storefront,must,yes,yes,S24
+"Liste des commandes avec recherche (client, téléphone, n°) et filtres de statut",orders,must,yes,partial,S07
+"Détail commande: édition, statuts, pièces jointes, replanification + date de suivi",orders,must,yes,partial,S08
+Workflow OMS: new -> confirmed -> preparing -> shipped -> delivered/returned/cancelled,orders,must,yes,yes,"cœur du produit, blog + landing"
+Dispatching des nouvelles commandes vers des agents de confirmation (file live),orders,should,yes,no,"S10, changelog v2.6.0"
+Création manuelle de commande + extraction IA depuis capture (FB/IG),orders,should,yes,partial,S09 'AI Extract'; on réimplémente avec nos propres règles/modèle
+"Score de fiabilité client (taux confirmation/livraison, prédit par IA)",orders,should,yes,no,"S08/S11, changelog v2.5.7; version rule-based d'abord"
+Badges repeat buyer et statuts sur les cartes commande,orders,could,yes,no,changelog v2.4.3
+"Échange de commande (commande liée, flux dédié)",orders,could,yes,no,changelog v2.5.7
+Redirection WhatsApp depuis une commande,orders,could,yes,yes,changelog v2.4.3
+"Gestion des produits: images, prix, coût, stock, code-barres",catalog,must,yes,yes,S06
+Variantes produit (taille/couleur) et bundles,catalog,must,yes,no,changelog v2.4.3
+Inventaire temps réel avec blocage de l'oversell,inventory,must,yes,yes,blog guide TN 'real-time inventory tracking'
+Alertes stock faible,inventory,should,yes,no,infiniéré depuis S05 badges
+Transporteurs configurables par boutique + presets de prix par pays (TN/DZ/LY),delivery,must,yes,partial,S12; intégration via API publiques ou saisie manuelle
+Choix d'une méthode de livraison + prix affiché par commande,delivery,must,yes,yes,changelog v2.6.0
+Suivi livraison temps réel + étiquette d'expédition,delivery,must,yes,partial,S12/S24
+Réconciliation COD (montants à récupérer par transporteur),delivery,must,yes,partial,blog guide TN
+"Dashboard stats temps réel: revenus, commandes, visiteurs, conversion, taux de retour",analytics,must,yes,yes,S04/S13
+Calculateur de rentabilité par unité (coût livraison + coût lead + taux confirmation),analytics,should,yes,no,S13, différenciant marketing
+Rapports exportables,analytics,could,yes,no,guess
+"Multi-store: switch entre boutiques, rôles owner / agent de confirmation",team,must,yes,partial,"changelog v2.3.0, Membership"
+Fil d'activité équipe filtrable,team,could,yes,no,"S17, changelog v2.2.5"
+Notifications in-app + push mobile sur nouvelles commandes,notifications,must,yes,no,"S04 bell, app mobile"
+"Sécurité anti-fraude COD: vérification téléphone, IP blocker, restrictions de pays",security,should,yes,yes,"blog comparatif, changelog v2.2.5"
+"Intégrations marketing: Facebook (Meta), Google Analytics, Search Console, Google Sheets",integrations,should,yes,no,landing
+Générateur de landing page par IA,ai,could,yes,no,landing; nos propres modèles
+Chatbot IA support client sur la boutique,ai,could,yes,no,landing
+"Facturation conforme fiscalité tunisienne (champs fiscaux, PDF)",billing,should,yes,no,"landing; on implémente les champs, pas la conformité légale"
+"Modèle de pricing: gratuit jusqu'à 10 000 TND de ventes puis commission 0,3 %",billing,must,yes,no,CGU + landing; cœur du business model
+Option abonnement fixe mensuel/annuel au-delà de 90 000 TND/30 j (à partir de 99 $),billing,should,yes,no,CGU
+Support 7j/7 09:00-00:00 (WhatsApp + email),support,could,yes,no,"service humain, hors scope produit"
+"App mobile iOS/Android (commandes, stats, scanner code-barres, multi-store)",mobile,could,yes,no,"S25; XL, après le MVP web"
+Scanner code-barres (mobile),mobile,could,yes,no,changelog v2.4.3
+i18n 20+ langues + RTL (arabe),i18n,should,yes,partial,"Play '20+ languages', changelog RTL fixes"
+"Thèmes propriétaires de Converty (Paris, Oslo, Amsterdam, Dakar, Tokyo, Nairobi, Berlin)",storefront,skip,yes,no,"contenu propriétaire, on crée nos propres thèmes"
+Contrats et réseau de transporteurs de Converty,delivery,skip,yes,no,leur réseau = actif propriétaire; couche d'intégration générique à la place
+Base de données clients/commerçants et réseau de boutiques,platform,skip,yes,no,données propriétaires
+"Modèles IA entraînés de Converty (extraction, prédiction)",ai,skip,yes,no,"on réimplémente la fonction, pas les poids"
+Experts Meta Ads et accompagnement humain,support,skip,yes,no,service humain
+"Nom, logo, copy et marque Converty",brand,skip,yes,no,clean-room: jamais repris

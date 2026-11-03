@@ -1,0 +1,38 @@
+  AAA   15.67:1  text                     on bg                   
+  AAA   16.73:1  text                     on surface              
+  AAA   14.50:1  text                     on surface-subtle       
+  AA     6.24:1  text-muted               on bg                   
+  AA     6.66:1  text-muted               on surface              
+  AA     5.77:1  text-muted               on surface-subtle       
+  AA     6.24:1  on-accent                on accent               
+  AA     5.85:1  accent                   on bg                   
+  AA     6.24:1  accent                   on surface              
+  PASS   5.85:1  accent                   on bg                   ui
+  PASS   6.24:1  accent                   on surface              ui
+  AA     6.57:1  accent-hover             on accent-soft          
+  PASS   3.90:1  border-input             on bg                   ui
+  AA     6.12:1  danger                   on bg                   
+  AA     6.54:1  danger                   on surface              
+  AA     5.58:1  danger                   on danger-soft          
+  AA     5.04:1  success                  on bg                   
+  AA     4.68:1  success                  on success-soft         
+  AA     5.55:1  warning                  on bg                   
+  AA     5.24:1  warning                  on warning-soft         
+  AA     6.95:1  status-new               on status-new-soft      
+  AAA    8.01:1  status-new               on surface              
+  AA     5.24:1  status-to_confirm        on status-to_confirm-soft 
+  AA     5.93:1  status-to_confirm        on surface              
+  AA     5.54:1  status-unreachable       on status-unreachable-soft 
+  AA     6.76:1  status-unreachable       on surface              
+  AA     5.59:1  status-confirmed         on status-confirmed-soft 
+  AA     6.47:1  status-confirmed         on surface              
+  AAA    7.06:1  status-shipped           on status-shipped-soft  
+  AAA    8.37:1  status-shipped           on surface              
+  AA     4.68:1  status-delivered         on status-delivered-soft 
+  AA     5.38:1  status-delivered         on surface              
+  AA     5.38:1  status-returned          on status-returned-soft 
+  AA     6.31:1  status-returned          on surface              
+  AA     5.91:1  status-cancelled         on status-cancelled-soft 
+  AAA    7.25:1  status-cancelled         on surface              
+
+  36 pairs, 0 failing AA

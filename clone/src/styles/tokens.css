@@ -1,0 +1,78 @@
+/* ============================================================================
+   tokens.css — design system du clone COD (identité originale "Terre & Encre")
+   Propriétés custom sur :root. Tailwind v4 les consomme via tailwind-theme.css
+   (@theme inline). Ne JAMAIS utiliser de hex en dur dans les composants.
+   ========================================================================== */
+
+:root {
+  /* couleurs (rôles) */
+  --bg: #FBF7F1;
+  --surface: #FFFFFF;
+  --surface-subtle: #F4EEE5;
+  --border: #E8DFD2;
+  --border-input: #8A7A64;
+  --text: #221D16;
+  --text-muted: #655B4C;
+  --accent: #A83E14;
+  --accent-hover: #8F3410;
+  --accent-soft: #F9E7DE;
+  --on-accent: #FFFFFF;
+  --danger: #B3261E;
+  --danger-soft: #FBE9E7;
+  --success: #1E7A3C;
+  --success-soft: #E4F3E8;
+  --warning: #8A5A00;
+  --warning-soft: #FBF0D8;
+
+  /* statuts de commande: <statut> = texte, <statut>-soft = fond de pastille */
+  --status-new: #2F4B9E;           --status-new-soft: #E9EFFB;
+  --status-to_confirm: #8A5A00;    --status-to_confirm-soft: #FBF0D8;
+  --status-unreachable: #A03A0C;   --status-unreachable-soft: #FBE4D8;
+  --status-confirmed: #0E6B52;     --status-confirmed-soft: #E2F2EC;
+  --status-shipped: #4A3FA0;       --status-shipped-soft: #ECEAFB;
+  --status-delivered: #1E7A3C;     --status-delivered-soft: #E4F3E8;
+  --status-returned: #7C5A14;      --status-returned-soft: #F6ECD7;
+  --status-cancelled: #A12B2B;     --status-cancelled-soft: #F3E5E3;
+
+  /* polices (libres, OFL) */
+  --font-sans: "Manrope", "Tajawal", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-arabic: "Tajawal", "Manrope", system-ui, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  /* échelle typo (px) */
+  --text-xs: 12px;  --text-xs--line-height: 16px;
+  --text-sm: 14px;  --text-sm--line-height: 20px;
+  --text-base: 16px; --text-base--line-height: 24px;
+  --text-lg: 20px;  --text-lg--line-height: 28px;
+  --text-xl: 28px;  --text-xl--line-height: 34px;
+  --text-display: 40px; --text-display--line-height: 44px;
+
+  /* rayons (px) */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-pill: 999px;
+
+  /* ombres */
+  --shadow-card: 0 1px 2px rgba(34,29,22,.06), 0 1px 3px rgba(34,29,22,.10);
+  --shadow-pop: 0 12px 32px rgba(34,29,22,.16);
+
+  /* motion */
+  --duration-fast: 120ms;
+  --duration-base: 200ms;
+  --ease-brand: cubic-bezier(.2,.8,.2,1);
+
+  /* layout */
+  --header-h: 56px;
+  --bottomnav-h: 56px;
+  --sidebar-w: 240px;
+  --content-max: 1200px;
+  --storefront-max: 680px;
+  --touch-min: 44px;
+}
+
+/* Direction: l'attribut dir est posé sur <html> par locale (fr=ltr, ar=rtl). */
+[dir="rtl"] .flip-rtl { transform: scaleX(-1); }
+
+/* Îlots LTR: téléphones, n° de commande, tracking — jamais forcés en RTL */
+.ltr-island { direction: ltr; unicode-bidi: plaintext; }

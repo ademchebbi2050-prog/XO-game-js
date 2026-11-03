@@ -1,0 +1,299 @@
+// Miroir applicatif de replica/schema.sql (migration 0 de référence).
+// Les CHECK constraints, la séquence et la vue sont appliquées par
+// scripts/apply-constraints.mjs (Prisma ne gère pas les CHECK en schema).
+
+generator client {
+  provider        = "prisma-client"
+  output          = "../src/generated/prisma"
+  previewFeatures = ["driverAdapters", "queryCompiler"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum OrderStatus {
+  new
+  to_confirm
+  unreachable
+  confirmed
+  shipped
+  delivered
+  returned
+  cancelled
+  @@map("order_status")
+}
+
+enum CallOutcome {
+  answered
+  no_answer
+  busy
+  whatsapp
+  @@map("call_outcome")
+}
+
+enum PaymentMethod {
+  cod
+  @@map("payment_method")
+}
+
+enum PaymentStatus {
+  pending
+  paid
+  refunded
+  @@map("payment_status")
+}
+
+enum StoreStatus {
+  draft
+  published
+  @@map("store_status")
+}
+
+enum OrderSource {
+  web
+  manual
+  @@map("order_source")
+}
+
+model User {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email         String    @unique
+  passwordHash  String    @map("password_hash")
+  name          String
+  phone         String?
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  accounts      Account[]
+  stores        Store[]
+  statusChanges OrderStatusHistory[]
+  callAttempts  OrderCallAttempt[]
+  blockedPhones BlockedPhoneNumber[]
+
+  @@map("users")
+}
+
+// --- Auth.js v5 (adapter Prisma, stratégie JWT utilisée en pratique) ---
+model Account {
+  id                String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId            String  @map("user_id") @db.Uuid
+  type              String
+  provider          String
+  providerAccountId String  @map("provider_account_id")
+  refreshToken      String? @map("refresh_token")
+  accessToken       String? @map("access_token")
+  expiresAt         Int?    @map("expires_at")
+  tokenType         String? @map("token_type")
+  scope             String?
+  idToken           String? @map("id_token")
+  sessionState      String? @map("session_state")
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sessionToken String   @unique @map("session_token")
+  userId       String   @map("user_id") @db.Uuid
+  expires      DateTime @db.Timestamptz(6)
+
+  @@index([userId])
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime @db.Timestamptz(6)
+
+  @@id([identifier, token])
+  @@map("verification_tokens")
+}
+
+// --- Multi-tenant ---
+model Store {
+  id            String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  ownerId       String       @map("owner_id") @db.Uuid
+  name          String
+  slug          String       @unique
+  currency      String       @default("TND")
+  defaultLocale String       @default("fr") @map("default_locale")
+  status        StoreStatus  @default(draft)
+  settings      Json         @default("{}")
+  createdAt     DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime     @updatedAt @map("updated_at") @db.Timestamptz(6)
+  owner         User         @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  categories    Category[]
+  products      Product[]
+  orders        Order[]
+  deliveryRates DeliveryRate[]
+
+  @@index([ownerId])
+  @@map("stores")
+}
+
+model DeliveryRate {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  storeId     String   @map("store_id") @db.Uuid
+  governorate String
+  feeMinor    Int      @map("fee_minor")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  store       Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@unique([storeId, governorate])
+  @@map("delivery_rates")
+}
+
+model Carrier {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code        String   @unique
+  name        String
+  baseFeeMinor Int     @default(0) @map("base_fee_minor")
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  orders      Order[]
+
+  @@map("carriers")
+}
+
+// --- Catalogue ---
+model Category {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  storeId   String    @map("store_id") @db.Uuid
+  name      String
+  slug      String
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  store     Store     @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  products  Product[]
+
+  @@unique([storeId, slug])
+  @@map("categories")
+}
+
+model Product {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  storeId     String    @map("store_id") @db.Uuid
+  categoryId  String?   @map("category_id") @db.Uuid
+  name        String
+  description String    @default("")
+  priceMinor  Int       @map("price_minor")
+  costMinor   Int?      @map("cost_minor")
+  stock       Int       @default(0)
+  barcode     String?
+  imageUrl    String?   @map("image_url")
+  isActive    Boolean   @default(true) @map("is_active")
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  store       Store     @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  category    Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  orderItems  OrderItem[]
+
+  @@unique([storeId, barcode])
+  @@index([storeId])
+  @@index([storeId, isActive])
+  @@index([categoryId])
+  @@map("products")
+}
+
+// --- Commandes ---
+model Order {
+  id              String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  storeId         String        @map("store_id") @db.Uuid
+  number          String
+  customerName    String        @map("customer_name")
+  customerPhone   String        @map("customer_phone")
+  governorate     String
+  address         String
+  subtotalMinor   Int           @map("subtotal_minor")
+  deliveryFeeMinor Int          @default(0) @map("delivery_fee_minor")
+  discountMinor   Int           @default(0) @map("discount_minor")
+  totalMinor      Int           @map("total_minor")
+  paymentMethod   PaymentMethod @default(cod) @map("payment_method")
+  paymentStatus   PaymentStatus @default(pending) @map("payment_status")
+  status          OrderStatus   @default(new)
+  source          OrderSource   @default(web)
+  carrierId       String?       @map("carrier_id") @db.Uuid
+  trackingNumber  String?       @map("tracking_number")
+  idempotencyKey  String?       @unique @map("idempotency_key")
+  restocked       Boolean       @default(false)
+  createdAt       DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime      @updatedAt @map("updated_at") @db.Timestamptz(6)
+  store           Store         @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  carrier         Carrier?      @relation(fields: [carrierId], references: [id], onDelete: SetNull)
+  items           OrderItem[]
+  statusHistory   OrderStatusHistory[]
+  callAttempts    OrderCallAttempt[]
+
+  @@unique([storeId, number])
+  @@index([storeId, status])
+  @@index([storeId, createdAt(sort: Desc)])
+  @@index([customerPhone])
+  @@index([storeId, customerPhone])
+  @@map("orders")
+}
+
+model OrderItem {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orderId      String   @map("order_id") @db.Uuid
+  productId    String?  @map("product_id") @db.Uuid
+  nameSnapshot String   @map("name_snapshot")
+  priceMinor   Int      @map("price_minor")
+  qty          Int
+  order        Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product      Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+
+  @@index([orderId])
+  @@index([productId])
+  @@map("order_items")
+}
+
+model OrderStatusHistory {
+  id         String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orderId    String      @map("order_id") @db.Uuid
+  status     OrderStatus
+  note       String?
+  changedById String?    @map("changed_by_id") @db.Uuid
+  createdAt  DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  order      Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  changedBy  User?       @relation(fields: [changedById], references: [id], onDelete: SetNull)
+
+  @@index([orderId, createdAt])
+  @@map("order_status_history")
+}
+
+model OrderCallAttempt {
+  id      String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orderId String      @map("order_id") @db.Uuid
+  outcome CallOutcome
+  note    String?
+  userId  String?     @map("user_id") @db.Uuid
+  at      DateTime    @default(now()) @db.Timestamptz(6)
+  order   Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  user    User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([orderId, at(sort: Desc)])
+  @@map("order_call_attempts")
+}
+
+// --- Rate limiting (fenêtre fixe) & numéros bloqués ---
+model OrderRateLimit {
+  key         String
+  windowStart DateTime @map("window_start") @db.Timestamptz(6)
+  count       Int      @default(0)
+
+  @@id([key, windowStart])
+  @@map("order_rate_limits")
+}
+
+model BlockedPhoneNumber {
+  phone     String   @id
+  reason    String?
+  blockedBy String?  @map("blocked_by") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  user      User?    @relation(fields: [blockedBy], references: [id], onDelete: SetNull)
+
+  @@map("blocked_phone_numbers")
+}
