@@ -144,9 +144,13 @@ npm install                          # terminal courant
 # terminal 1:
 npm run db:up                        # laisser ouvert
 npm run db:setup                     # première fois seulement
+# Optionnel (M4, recommandé): active le RLS Postgres (défense en profondeur)
+node scripts/enable-rls.mjs
 # terminal 2:
 npm run build
 npx next start -p 3000 -H 0.0.0.0     # laisser ouvert
+# tests d'isolation + preuve RLS (serveur lancé):
+node tests/isolation/run.mjs         # 20/20 PASS attendus
 # navigateur:
 #   http://app.localhost:3000/app/login   (demo@exemple.tn / demo1234)
 #   http://boutique-a.localhost:3000/
