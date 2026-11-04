@@ -1,5 +1,28 @@
 # Clone Converty — guide de lancement (Windows, from scratch)
 
+## 🚀 Méthode la plus simple (une seule action)
+
+Après avoir cloné le dépôt et installé Node.js ≥ 22.18 :
+
+```powershell
+cd C:\Users\<Toi>\XO-game-js\clone
+# double-clic sur start.cmd, OU :
+powershell -ExecutionPolicy Bypass -File .\start.ps1
+```
+
+Le script fait tout : vérifie Node, crée `.env`, installe les dépendances si besoin,
+vérifie le fichier `hosts`, démarre la base PGlite (fenêtre séparée), applique le
+schéma + le seed + le RLS, build si besoin, et lance le serveur. Puis :
+
+- Dashboard : http://app.localhost:3000/app/login (demo@exemple.tn / demo1234)
+- Boutiques : http://boutique-a.localhost:3000/ et http://boutique-b.localhost:3000/
+
+> Le fichier `hosts` reste la seule étape manuelle : en admin,
+> `notepad C:\Windows\System32\drivers\etc\hosts` → ajouter
+> `127.0.0.1 app.localhost boutique-a.localhost boutique-b.localhost`
+
+## Guide détaillé pas à pas
+
 Application e-commerce « paiement à la livraison » (COD) pour la Tunisie :
 Next.js 15 + TypeScript + Tailwind 4 + Prisma (client WASM, aucun binaire Rust)
 + PGlite (Postgres embarqué, aucune installation de Postgres requise) + NextAuth v5.

@@ -14,7 +14,7 @@ try {
   const u = await client.query(
     `INSERT INTO users (email, password_hash, name, phone)
      VALUES ($1,$2,$3,$4)
-     ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name
+     ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name, password_hash = EXCLUDED.password_hash
      RETURNING id`,
     ["demo@exemple.tn", passwordHash, "Démo Commerçant", "+21698000000"]
   );
