@@ -93,6 +93,9 @@ if (-not (Test-Path ".next\BUILD_ID")) {
 }
 
 # --- 7. serveur au premier plan ---
+Step "Diagnostic (node scripts/check.mjs)"
+node scripts/check.mjs
+
 Step "Démarrage du serveur (Ctrl+C pour arrêter)"
 Write-Host ""
 Write-Host "  Dashboard :  http://app.localhost:3000/app/login   (demo@exemple.tn / demo1234)"
