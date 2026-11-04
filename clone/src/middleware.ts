@@ -16,7 +16,11 @@ export function middleware(req: NextRequest) {
   headers.set("x-locale", locale);
 
   const isAppHost = label === "app" || label === "www" || label === "" ||
-    host.startsWith("localhost") || host.startsWith("127.0.0.1");
+    host.startsWith("localhost") || host.startsWith("127.0.0.1") ||
+    // Preview sandbox: https://<port>-<id>.e2b.app (label commence par le port)
+    // est traité comme hôte app; ses sous-domaines (<slug>.<port>-<id>.e2b.app)
+    // restent des boutiques.
+    (host.endsWith(".e2b.app") && /^\d/.test(label));
 
   let pathname = path;
   if (isAppHost) {
