@@ -20,12 +20,24 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         password: { label: "Mot de passe", type: "password" },
       },
       async authorize(creds) {
-        if (!creds?.email || !creds?.password) return null;
-        const user = await prisma.user.findUnique({
-          where: { email: String(creds.email).toLowerCase().trim() },
-        });
-        if (!user) return null;
+        if (!creds?.email || !creds?.password) {
+          console.warn("[auth] authorize: champs manquants");
+          return null;
+        }
+        const email = String(creds.email).toLowerCase().trim();
+        let user;
+        try {
+          user = await prisma.user.findUnique({ where: { email } });
+        } catch (e) {
+          console.warn("[auth] authorize: ERREUR DB", (e as Error).message?.slice(0, 200));
+          return null;
+        }
+        if (!user) {
+          console.warn(`[auth] authorize: aucun user pour ${email} — lance "npm run db:setup"`);
+          return null;
+        }
         const ok = await verifyPassword(String(creds.password), user.passwordHash);
+        console.warn(`[auth] authorize: user ${email} trouvé, mot de passe ${ok ? "OK" : "REFUSÉ"}`);
         if (!ok) return null;
         return { id: user.id, email: user.email, name: user.name };
       },
