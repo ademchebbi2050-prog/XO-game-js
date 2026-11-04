@@ -34,7 +34,7 @@ Réconciliation COD (montants à récupérer par transporteur),delivery,must,yes
 "Dashboard stats temps réel: revenus, commandes, visiteurs, conversion, taux de retour",analytics,must,yes,yes,S04/S13
 Calculateur de rentabilité par unité (coût livraison + coût lead + taux confirmation),analytics,should,yes,no,S13, différenciant marketing
 Rapports exportables,analytics,could,yes,no,guess
-"Multi-store: switch entre boutiques, rôles owner / agent de confirmation",team,must,yes,partial,"changelog v2.3.0, Membership"
+"Multi-store: switch entre boutiques, rôles owner / agent de confirmation",team,must,yes,yes,"changelog v2.3.0, Membership"
 Fil d'activité équipe filtrable,team,could,yes,no,"S17, changelog v2.2.5"
 Notifications in-app + push mobile sur nouvelles commandes,notifications,must,yes,no,"S04 bell, app mobile"
 "Sécurité anti-fraude COD: vérification téléphone, IP blocker, restrictions de pays",security,should,yes,yes,"blog comparatif, changelog v2.2.5"
@@ -47,7 +47,7 @@ Option abonnement fixe mensuel/annuel au-delà de 90 000 TND/30 j (à partir de 
 Support 7j/7 09:00-00:00 (WhatsApp + email),support,could,yes,no,"service humain, hors scope produit"
 "App mobile iOS/Android (commandes, stats, scanner code-barres, multi-store)",mobile,could,yes,no,"S25; XL, après le MVP web"
 Scanner code-barres (mobile),mobile,could,yes,no,changelog v2.4.3
-i18n 20+ langues + RTL (arabe),i18n,should,yes,partial,"Play '20+ languages', changelog RTL fixes"
+i18n 20+ langues + RTL (arabe),i18n,should,yes,yes,"Play '20+ languages', changelog RTL fixes"
 "Thèmes propriétaires de Converty (Paris, Oslo, Amsterdam, Dakar, Tokyo, Nairobi, Berlin)",storefront,skip,yes,no,"contenu propriétaire, on crée nos propres thèmes"
 Contrats et réseau de transporteurs de Converty,delivery,skip,yes,no,leur réseau = actif propriétaire; couche d'intégration générique à la place
 Base de données clients/commerçants et réseau de boutiques,platform,skip,yes,no,données propriétaires

@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/db";
+import { prisma, setAppContext } from "@/lib/db";
 import { getSessionUser } from "@/lib/auth";
 import type { Store } from "@/generated/prisma/client";
 import { RESERVED_SLUGS, hostLabel } from "@/lib/hosts";
@@ -13,7 +13,11 @@ export async function getStoreFromSlugHeader(slug: string | null) {
 
 export async function getStoreBySlug(slug: string): Promise<Store | null> {
   if (RESERVED_SLUGS.has(slug)) return null;
-  return prisma.store.findUnique({ where: { slug } });
+  // Contexte RLS public: pas d'utilisateur, store_id posé après résolution.
+  await setAppContext(null, null);
+  const store = await prisma.store.findUnique({ where: { slug } });
+  if (store) await setAppContext(null, store.id);
+  return store;
 }
 
 /**

@@ -4,7 +4,7 @@ import pg from "pg";
 import bcrypt from "bcryptjs";
 import { GOVERNORATES, DEFAULT_DELIVERY_FEE_MINOR } from "../src/lib/governorates.ts";
 
-const url = process.env.DATABASE_URL || "postgresql://postgres:postgres@127.0.0.1:5433/postgres";
+const url = process.env.ADMIN_DATABASE_URL || "postgresql://postgres:postgres@127.0.0.1:5433/postgres";
 const pool = new pg.Pool({ connectionString: url });
 const client = await pool.connect();
 

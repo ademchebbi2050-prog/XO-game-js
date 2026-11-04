@@ -39,6 +39,8 @@ export async function applyStatusChange(opts: {
 }) {
   const { orderId, storeId, to, note, userId } = opts;
   return prisma.$transaction(async (tx) => {
+    // RLS: GUC posé dans LA transaction (is_local=true, remis à zéro au commit).
+    await tx.$executeRawUnsafe("select set_config('app.store_id', $1, true)", storeId);
     const order = await tx.order.findFirst({ where: { id: orderId, storeId }, include: { items: true } });
     if (!order) throw new Error("ORDER_NOT_FOUND");
     if (!canTransition(order.status, to)) throw new Error("INVALID_TRANSITION");
@@ -98,6 +100,8 @@ export async function createOrderWithItems(opts: {
   if (!items.length) throw new Error("EMPTY_ORDER");
 
   return prisma.$transaction(async (tx) => {
+    // RLS: GUC posé dans LA transaction (is_local=true, remis à zéro au commit).
+    await tx.$executeRawUnsafe("select set_config('app.store_id', $1, true)", storeId);
     if (idempotencyKey) {
       const existing = await tx.order.findUnique({ where: { idempotencyKey } });
       if (existing) return { order: existing, replayed: true };

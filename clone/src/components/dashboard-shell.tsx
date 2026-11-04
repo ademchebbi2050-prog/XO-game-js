@@ -20,6 +20,7 @@ export default function DashboardShell({ userName, children }: { userName: strin
   const { t } = useLocale();
   const pathname = usePathname();
   const [store, setStore] = useState<{ id: string; name: string; slug: string } | null>(null);
+  const [stores, setStores] = useState<{ id: string; name: string; slug: string }[]>([]);
   const [newCount, setNewCount] = useState(0);
 
   useEffect(() => {
@@ -27,6 +28,7 @@ export default function DashboardShell({ userName, children }: { userName: strin
       .then((r) => r.json())
       .then((d) => {
         const list = d.stores ?? [];
+        setStores(list);
         const cookie = document.cookie.match(/store_id=([^;]+)/);
         const active = (cookie && list.find((s: { id: string }) => s.id === decodeURIComponent(cookie[1]))) || list[0];
         if (active) {
@@ -47,10 +49,26 @@ export default function DashboardShell({ userName, children }: { userName: strin
       {/* TopBar */}
       <header className="sticky top-0 z-20 flex h-14 items-center gap-3 border-b border-border bg-surface px-4">
         <span className="text-lg font-extrabold text-accent">{t("common.appName")}</span>
-        {store && (
-          <span className="hidden truncate rounded-pill bg-surface-subtle px-3 py-1 text-xs font-semibold text-text-muted sm:inline">
-            {store.name}
-          </span>
+        {store && stores.length > 1 ? (
+          <select
+            aria-label={t("nav.switchStore")}
+            className="h-9 max-w-40 truncate rounded-md border border-border-input bg-surface px-2 text-xs font-semibold"
+            value={store.id}
+            onChange={(e) => {
+              document.cookie = `store_id=${e.target.value}; path=/; samesite=lax`;
+              window.location.reload();
+            }}
+          >
+            {stores.map((s) => (
+              <option key={s.id} value={s.id}>{s.name}</option>
+            ))}
+          </select>
+        ) : (
+          store && (
+            <span className="hidden truncate rounded-pill bg-surface-subtle px-3 py-1 text-xs font-semibold text-text-muted sm:inline">
+              {store.name}
+            </span>
+          )
         )}
         <div className="ms-auto flex items-center gap-3">
           <LangSwitch />

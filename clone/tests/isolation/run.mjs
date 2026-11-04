@@ -66,7 +66,7 @@ const orderBody = {
 };
 const created = await req(A, "/api/public/stores/boutique-a/orders", {
   method: "POST",
-  headers: { "Content-Type": "application/json", "Idempotency-Key": key, "X-Forwarded-For": "10.1.1.1" },
+  headers: { "Content-Type": "application/json", "Idempotency-Key": key, "X-Forwarded-For": `10.${Math.floor(Math.random()*250)}.${Math.floor(Math.random()*250)}.${Math.floor(Math.random()*250)}` },
   body: JSON.stringify(orderBody),
 });
 check("commande créée sur A", created.status === 201, created.json?.order?.number);
@@ -106,6 +106,60 @@ check("store_id d'une boutique non possédée -> 400/401", [400, 401].includes(f
 // la commande de A reste bien visible depuis A (pas de faux positif)
 const ordersA = await req(APP, "/api/orders", { headers: CA });
 check("commande de A visible depuis A", (ordersA.json?.orders ?? []).some((o) => o.number === orderA.number));
+
+// --- preuve RLS au niveau DB (fail-closed) ---
+// PGlite socket n'accepte qu'un client à la fois: on retente jusqu'à ce que le
+// pool de l'app (max:1, idleTimeout 5s) libère la connexion.
+{
+  const { default: pg } = await import("pg");
+  // PGlite est mono-utilisateur: tout login retombe sur postgres (superuser,
+  // qui contourne le RLS). Pour prouver l'application des policies, on fait
+  // SET ROLE app (rôle non-superuser créé par enable-rls.mjs) — en prod Neon,
+  // le rôle applicatif est réellement non-superuser.
+  const url = process.env.ADMIN_DATABASE_URL ?? "postgresql://postgres:postgres@127.0.0.1:5433/postgres";
+  let client = null;
+  for (let attempt = 0; attempt < 20 && !client; attempt++) {
+    try {
+      const c = new pg.Client({ connectionString: url, connectionTimeoutMillis: 3000 });
+      await c.connect();
+      await c.query("select 1");
+      await c.query("set role app");
+      client = c;
+    } catch {
+      await new Promise((r) => setTimeout(r, 3000));
+    }
+  }
+  check("connexion DB de test obtenue (pool app libéré, role=app)", !!client);
+  if (!client) { console.log(`\n${failures + 1} ÉCHEC(S)`); process.exit(1); }
+  const rls = await client.query("select relname from pg_class where relrowsecurity order by 1");
+  check("RLS activé sur tables sensibles", rls.rows.length >= 7, rls.rows.map((r) => r.relname).join(","));
+
+  const noGuc = await client.query("select count(*)::int as c from orders");
+  check("sans GUC app.store_id -> 0 ligne (fail-closed)", noGuc.rows[0].c === 0, `c=${noGuc.rows[0].c}`);
+
+  await client.query("select set_config('app.store_id', $1, false)", [storeB.id]);
+  const asB = await client.query("select count(*)::int as c from orders where store_id = $1::uuid", [storeA.id]);
+  check("avec GUC store_id=B -> commandes de A invisibles en SQL brut", asB.rows[0].c === 0);
+
+  await client.query("select set_config('app.store_id', $1, false)", [storeA.id]);
+  const asA = await client.query("select count(*)::int as c from orders where store_id = $1::uuid", [storeA.id]);
+  check("avec GUC store_id=A -> commandes de A visibles en SQL brut", asA.rows[0].c >= 1);
+  // IMPORTANT: PGlite socket partage UNE session entre clients socket; on remet
+  // le rôle/GUC à zéro pour ne pas faire fuiter l'état RLS vers l'app.
+  await client.query("reset role");
+  await client.query("select set_config('app.store_id','',false), set_config('app.current_user_id','',false)");
+  await client.end();
+}
+
+// --- RTL / i18n ---
+{
+  const frHome = await fetch(BASE + "/", { headers: { ...A } });
+  const frHtml = await frHome.text();
+  check("storefront FR -> dir=\"ltr\"", frHtml.includes('dir="ltr"'));
+  const arHome = await fetch(BASE + "/", { headers: { ...A, Cookie: "locale=ar" } });
+  const arHtml = await arHome.text();
+  check("storefront AR -> lang=\"ar\" dir=\"rtl\"", arHtml.includes('lang="ar"') && arHtml.includes('dir="rtl"'));
+}
 
 console.log(failures === 0 ? "\nTOUS LES TESTS D'ISOLATION PASSENT" : `\n${failures} ÉCHEC(S)`);
 process.exit(failures === 0 ? 0 : 1);

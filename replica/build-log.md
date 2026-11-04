@@ -100,3 +100,26 @@ Livré et testé contre le serveur de prod local :
   livraison/retour) + stats filtrées par période (7d/30d/all) + série CA/jour.
   Testé: allTime = 11 commandes, CA 163 000 m, taux livraison 50 %, retour 50 %.
 - Re-run `tests/isolation/run.mjs` après M3: 13/13 PASS.
+
+## Jalon M4 — RLS, multi-boutique, i18n/RTL (2026-11-04)
+
+- **RLS activé** (`scripts/enable-rls.mjs` applique `replica/schema-rls.sql`, idempotent):
+  policies `tenant_isolation` + `ENABLE/FORCE ROW LEVEL SECURITY` sur stores (owner OU
+  `status='published'` pour le storefront public), products, categories, orders,
+  delivery_rates, order_items, order_status_history, order_call_attempts.
+  `blocked_phone_numbers` / `order_rate_limits` restent hors RLS (tables anti-abus globales).
+  - Preuve d'application (tests/isolation/run.mjs, section DB): connexion puis
+    `SET ROLE app` (rôle non-superuser créé par enable-rls) → sans GUC **0 ligne**
+    (fail-closed), GUC=B → commandes de A invisibles, GUC=A → visibles.
+  - Caveat documenté: PGlite local est mono-utilisateur (superuser) → contourne le RLS;
+    en prod Neon le rôle app est non-superuser et le RLS s'applique. Les chemins
+    d'ÉCRITURE posent le GUC en transaction-local (`set_config(..., true)` dans
+    createOrderWithItems / applyStatusChange) — sans course possible.
+- **Multi-boutique + switch**: sélecteur de boutique dans la topbar du dashboard
+  (cookie `store_id`, rechargement), `store_id` étranger → 401 fail-closed (corrigé en M2).
+- **i18n/RTL**: 202 clés fr.json = 202 clés ar.json (diff automatisé: aucune manquante);
+  tests automatisés: storefront FR → `dir="ltr"`, AR → `lang="ar" dir="rtl"`.
+- **Suite d'isolation**: 20 checks, tous PASS (13 HTTP multi-tenant + 4 preuves RLS DB + 2 RTL + login).
+  `node tests/isolation/run.mjs` (serveur lancé, RLS actif).
+- **Prod domaine**: wildcard DNS `*.<domaine>` + TLS (Let's Encrypt) à prévoir au déploiement —
+  mémo, hors build local.

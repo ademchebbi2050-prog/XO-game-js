@@ -49,7 +49,8 @@
   "delivery": "Livraison",
   "settings": "Réglages",
   "logout": "Se déconnecter",
-  "viewStore": "Voir ma boutique"
+  "viewStore": "Voir ma boutique",
+  "switchStore": "Changer de boutique"
  },
  "dashboard": {
   "title": "Tableau de bord",

@@ -267,43 +267,14 @@ from orders o
 group by o.store_id;
 
 -- ============================================================================
--- RLS — DÉFENSE EN PROFONDEUR (à activer en M4, après les tests M0/M1)
+-- RLS — DÉFENSE EN PROFONDEUR (activé en M4)
 -- ----------------------------------------------------------------------------
--- Principe: l'app pose le GUC 'app.store_id' au début de CHAQUE transaction
--- (set_config('app.store_id', '<uuid>', true) dans prisma.$transaction(...)).
--- current_setting('app.store_id', true) renvoie NULL si non posé => fail-closed.
--- ATTENTION: la clé service Neon contourne RLS — jamais côté client.
--- Les lignes "enable row level security" sontVOLONTAIREMENT commentées:
--- à décommenter en M4, puis re-run de tests/isolation/ avec RLS actif.
--- ============================================================================
--- create policy tenant_isolation on stores
---   using (owner_id = current_setting('app.current_user_id', true)::uuid);
--- alter table stores enable row level security;
---
--- create policy tenant_isolation on products
---   using (store_id = current_setting('app.store_id', true)::uuid);
--- create policy tenant_isolation on categories
---   using (store_id = current_setting('app.store_id', true)::uuid);
--- create policy tenant_isolation on orders
---   using (store_id = current_setting('app.store_id', true)::uuid);
--- create policy tenant_isolation on delivery_rates
---   using (store_id = current_setting('app.store_id', true)::uuid);
--- create policy tenant_isolation on order_items
---   using (exists (select 1 from orders o
---                  where o.id = order_items.order_id
---                    and o.store_id = current_setting('app.store_id', true)::uuid));
--- create policy tenant_isolation on order_status_history
---   using (exists (select 1 from orders o
---                  where o.id = order_status_history.order_id
---                    and o.store_id = current_setting('app.store_id', true)::uuid));
--- create policy tenant_isolation on order_call_attempts
---   using (exists (select 1 from orders o
---                  where o.id = order_call_attempts.order_id
---                    and o.store_id = current_setting('app.store_id', true)::uuid));
--- alter table products enable row level security;
--- alter table categories enable row level security;
--- alter table orders enable row level security;
--- alter table delivery_rates enable row level security;
--- alter table order_items enable row level security;
--- alter table order_status_history enable row level security;
--- alter table order_call_attempts enable row level security;
+-- Les ordres RLS (policies + ENABLE/FORCE ROW LEVEL SECURITY) sont dans
+-- replica/schema-rls.sql, appliqués UNIQUEMENT par clone/scripts/enable-rls.mjs
+-- (après le seed : FORCE RLS s'applique aussi au propriétaire, le seed doit
+-- donc tourner avant). L'app pose les GUC 'app.current_user_id' et
+-- 'app.store_id' en début de requête (src/lib/db.ts setAppContext) ;
+-- current_setting(..., true) renvoie NULL si non posé => fail-closed.
+-- stores: lisible publiquement si published (storefront par slug), sinon owner.
+-- blocked_phone_numbers / order_rate_limits: tables anti-abus globales, hors RLS.
+-- ATTENTION prod (Neon): la clé service contourne RLS — jamais côté client.
