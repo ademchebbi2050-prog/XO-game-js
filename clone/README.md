@@ -26,10 +26,22 @@ lancé par un script du projet (voir étape 4).
 
 ## 2. Récupérer le code
 
+> **Windows PowerShell 5.1 ne connaît pas `&&`** : séparateur `;` ou commandes sur
+> des lignes séparées. Ne lance jamais `npm install` hors du dossier `clone\`.
+
 ```powershell
 git clone https://github.com/ademchebbi2050-prog/XO-game-js.git
 cd XO-game-js
 git checkout arena/b7a40c52-xo-game-js
+cd clone
+```
+
+Si le dossier `XO-game-js` existe déjà (clone précédent) :
+```powershell
+cd XO-game-js
+git fetch origin
+git checkout arena/b7a40c52-xo-game-js
+git pull origin arena/b7a40c52-xo-game-js
 cd clone
 ```
 
