@@ -13,7 +13,8 @@
     "db:setup": "npm run db:init && npm run db:seed",
     "postinstall": "prisma generate && node scripts/patch-prisma-wasm.mjs",
     "db:init": "node scripts/init-db.mjs",
-    "postgenerate": "node scripts/patch-prisma-wasm.mjs"
+    "postgenerate": "node scripts/patch-prisma-wasm.mjs",
+    "start:all": "node scripts/run-all.mjs"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^6.19.3",

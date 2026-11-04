@@ -7,12 +7,13 @@ Après avoir cloné le dépôt et installé Node.js ≥ 22.18 :
 ```powershell
 cd C:\Users\<Toi>\XO-game-js\clone
 # double-clic sur start.cmd, OU :
-powershell -ExecutionPolicy Bypass -File .\start.ps1
+node scripts/run-all.mjs
 ```
 
-Le script fait tout : vérifie Node, crée `.env`, installe les dépendances si besoin,
-vérifie le fichier `hosts`, démarre la base PGlite (fenêtre séparée), applique le
-schéma + le seed + le RLS, build si besoin, et lance le serveur. Puis :
+**Une seule fenêtre, une seule commande** : le script fait tout dans un seul processus —
+vérifie Node, crée `.env`, installe les dépendances si besoin, vérifie le fichier `hosts`,
+démarre la base PGlite **dans le même terminal**, applique le schéma + le seed + le RLS,
+build si besoin, lance le serveur Next, puis affiche le diagnostic `check.mjs`. Arrêt : `Ctrl+C`. Si le port 5433 est bloqué par un vieux processus, le script l'indique (`taskkill /PID <pid> /F`) et il suffit de relancer. Puis :
 
 - Dashboard : http://app.localhost:3000/app/login (demo@exemple.tn / demo1234)
 - Boutiques : http://boutique-a.localhost:3000/ et http://boutique-b.localhost:3000/
