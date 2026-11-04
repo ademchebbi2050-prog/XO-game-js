@@ -28,3 +28,9 @@
 14. Pages: shop / /product/[id] /category/divers /cart /checkout /order/CMD-000003 -> 200
     app /app/login /app/signup -> 200 ; sans session /app* -> 307 /app/login ; avec session dashboard/orders/products/settings/delivery -> 200
 15. Téléphone invalide -> 400 PHONE_INVALID ; gouvernorat invalide -> 400 INVALID_FORM
+
+# M2 (2026-11-04)
+node tests/isolation/run.mjs -> 13/13 PASS (voir build-log.md)
+Upload 2400x1800 PNG -> webp 1600x1200 q80, EXIF supprimé, magic bytes OK
+Commande manuelle CMD-000011: stock 18->15, cancel -> restocked=true, stock 18
+Catégorie "Électronique" créée via UI/API

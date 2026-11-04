@@ -5,8 +5,8 @@ Choix de thème parmi une galerie nommée + éditeur visuel no-code,storefront,m
 Sous-domaine gratuit + connexion domaine personnalisé,storefront,must,yes,partial,"FAQ landing, S15"
 Publication de la boutique en < 30 min,storefront,must,yes,yes,claim landing; KPI à battre
 Accueil boutique avec bannières et mise en avant,storefront,must,yes,partial,S19
-Catalogue / catégories avec filtres et pagination,storefront,must,yes,partial,S20
-"Page produit (galerie, prix, variantes, badge stock)",storefront,must,yes,partial,S21
+Catalogue / catégories avec filtres et pagination,storefront,must,yes,yes,S20
+"Page produit (galerie, prix, variantes, badge stock)",storefront,must,yes,yes,S21
 Panier avec quantités et total,storefront,must,yes,yes,S22
 "Checkout multi-étapes: contact, adresse/gouvernorat, livraison, paiement",checkout,must,yes,partial,S23
 Paiement à la livraison (COD) natif,payments,must,yes,yes,>70% des transactions en TN; cœur du positionnement
@@ -14,11 +14,11 @@ Paiement à la livraison (COD) natif,payments,must,yes,yes,>70% des transactions
 "Code promo / coupon (%, fixe, limites, expiration)",checkout,should,yes,no,"changelog v2.5.7, S22/S23/S08"
 Champs de checkout personnalisés (activés/désactivés par produit),checkout,should,yes,no,changelog Play 'product-specific checkout fields'
 Page de confirmation + suivi de commande client,storefront,must,yes,yes,S24
-"Liste des commandes avec recherche (client, téléphone, n°) et filtres de statut",orders,must,yes,partial,S07
-"Détail commande: édition, statuts, pièces jointes, replanification + date de suivi",orders,must,yes,partial,S08
+"Liste des commandes avec recherche (client, téléphone, n°) et filtres de statut",orders,must,yes,yes,S07
+"Détail commande: édition, statuts, pièces jointes, replanification + date de suivi",orders,must,yes,yes,S08
 Workflow OMS: new -> confirmed -> preparing -> shipped -> delivered/returned/cancelled,orders,must,yes,yes,"cœur du produit, blog + landing"
 Dispatching des nouvelles commandes vers des agents de confirmation (file live),orders,should,yes,no,"S10, changelog v2.6.0"
-Création manuelle de commande + extraction IA depuis capture (FB/IG),orders,should,yes,partial,S09 'AI Extract'; on réimplémente avec nos propres règles/modèle
+Création manuelle de commande + extraction IA depuis capture (FB/IG),orders,should,yes,yes,S09 'AI Extract'; on réimplémente avec nos propres règles/modèle
 "Score de fiabilité client (taux confirmation/livraison, prédit par IA)",orders,should,yes,no,"S08/S11, changelog v2.5.7; version rule-based d'abord"
 Badges repeat buyer et statuts sur les cartes commande,orders,could,yes,no,changelog v2.4.3
 "Échange de commande (commande liée, flux dédié)",orders,could,yes,no,changelog v2.5.7
@@ -26,7 +26,7 @@ Redirection WhatsApp depuis une commande,orders,could,yes,yes,changelog v2.4.3
 "Gestion des produits: images, prix, coût, stock, code-barres",catalog,must,yes,yes,S06
 Variantes produit (taille/couleur) et bundles,catalog,must,yes,no,changelog v2.4.3
 Inventaire temps réel avec blocage de l'oversell,inventory,must,yes,yes,blog guide TN 'real-time inventory tracking'
-Alertes stock faible,inventory,should,yes,no,infiniéré depuis S05 badges
+Alertes stock faible,inventory,should,yes,yes,infiniéré depuis S05 badges
 Transporteurs configurables par boutique + presets de prix par pays (TN/DZ/LY),delivery,must,yes,partial,S12; intégration via API publiques ou saisie manuelle
 Choix d'une méthode de livraison + prix affiché par commande,delivery,must,yes,yes,changelog v2.6.0
 Suivi livraison temps réel + étiquette d'expédition,delivery,must,yes,partial,S12/S24

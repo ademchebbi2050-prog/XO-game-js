@@ -30,18 +30,29 @@ export interface UploadedFile {
   bytes: number;
 }
 
-/** MVP: écrit sur disque dans public/uploads. Retourne l'URL publique. */
+/**
+ * MVP: écrit sur disque dans public/uploads. Retourne l'URL publique.
+ * Traitement serveur (architecture §6): orientation EXIF appliquée via .rotate(),
+ * redimensionnement max 1600 px (côté long), recompression WebP q80, EXIF supprimé
+ * (pas de .withMetadata() => métadonnées/GPS retirées), nom de fichier aléatoire.
+ */
 export async function uploadImage(buf: Buffer, declaredType: string): Promise<UploadedFile> {
   if (buf.length > MAX_IMAGE_BYTES) throw new Error("IMAGE_TOO_LARGE");
   const type = sniffImageType(buf);
   if (!type || !ALLOWED_IMAGE_TYPES.includes(type as (typeof ALLOWED_IMAGE_TYPES)[number])) {
     throw new Error("IMAGE_TYPE_NOT_ALLOWED");
   }
-  const name = randomBytes(16).toString("hex") + EXT[type];
+  const sharp = (await import("sharp")).default;
+  const processed = await sharp(buf, { failOn: "none" })
+    .rotate()
+    .resize({ width: 1600, height: 1600, fit: "inside", withoutEnlargement: true })
+    .webp({ quality: 80 })
+    .toBuffer();
+  const name = randomBytes(16).toString("hex") + ".webp";
   const dir = path.join(process.cwd(), "public", "uploads");
   await mkdir(dir, { recursive: true });
-  await writeFile(path.join(dir, name), buf);
-  return { url: "/uploads/" + name, type, bytes: buf.length };
+  await writeFile(path.join(dir, name), processed);
+  return { url: "/uploads/" + name, type: "image/webp", bytes: processed.length };
 }
 
 export async function removeImage(url: string): Promise<void> {

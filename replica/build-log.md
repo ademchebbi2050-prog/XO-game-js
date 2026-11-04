@@ -63,3 +63,24 @@ npm run build                            # PAS de variables PRISMA_*_BINARY ici
 npx next start -p 3000 -H 0.0.0.0
 # storefront : Host: boutique-a.localhost:3000   dashboard : Host: app.localhost:3000
 ```
+
+## Jalon M2 — catalogue & gestion (2026-11-04)
+
+Livré et testé contre le serveur de prod local :
+
+- **Images**: `lib/storage.ts` traite désormais côté serveur avec sharp — orientation EXIF
+  appliquée, resize max 1600 px (vérifié: 2400×1800 → webp 1600×1200), recompression WebP q80,
+  EXIF/métadonnées supprimés, nom aléatoire. Magic bytes vérifiés (faux PNG rejeté 400).
+- **Catégories**: CRUD API + création inline depuis la page Produits (UI FR/AR).
+- **Stock**: badges rupture / stock faible (≤5) sur la liste; décrément conditionnel en
+  transaction (anti-oversell, testé M1); **remise en stock sur `cancelled` et `returned`**,
+  garde `restocked` (testé: stock 18→15 à la commande manuelle, retour à 18 à l'annulation,
+  double restock impossible → 409).
+- **Commande manuelle + édition**: `POST /api/orders` (source=manual, testé CMD-000011),
+  `PATCH /api/orders/[id]` (nom/adresse/gouvernorat/téléphone +216 validé, testé).
+- **Timeline**: historique des statuts + appels journalisés sur la fiche commande; boutons
+  `tel:` / `wa.me` (WhatsApp) présents.
+- **Tests d'isolation** (`tests/isolation/run.mjs`, 13 cas): tous PASS — commande/produit
+  de A invisibles depuis B (liste, détail, mutation), suivi public cross-boutique → 404,
+  sans session → 401, `store_id` étranger → 401 (**fail-closed corrigé en M2**: auparavant
+  repli silencieux sur la première boutique).

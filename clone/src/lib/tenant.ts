@@ -18,8 +18,10 @@ export async function getStoreBySlug(slug: string): Promise<Store | null> {
 
 /**
  * Store du commerçant connecté. Le cookie store_id choisit la boutique active
- * (multi-boutique); il doit appartenir à l'utilisateur, sinon on prend sa
- * première boutique. CHAQUE requête métier filtre ensuite par store.id.
+ * (multi-boutique). Fail-closed: si un store_id est présent mais n'appartient
+ * PAS à l'utilisateur, on refuse (null) — jamais de repli silencieux vers une
+ * autre boutique. Sans cookie, on prend sa première boutique.
+ * CHAQUE requête métier filtre ensuite par store.id.
  */
 export async function requireUserStore(storeIdCookie?: string | null): Promise<{ user: { id: string; email: string; name: string }; store: Store } | null> {
   const user = await getSessionUser();
@@ -29,9 +31,12 @@ export async function requireUserStore(storeIdCookie?: string | null): Promise<{
     orderBy: { createdAt: "asc" },
   });
   if (stores.length === 0) return { user, store: null as never }; // géré par l'appelant (onboarding)
-  const active =
-    (storeIdCookie && stores.find((s) => s.id === storeIdCookie)) || stores[0];
-  return { user, store: active };
+  if (storeIdCookie) {
+    const found = stores.find((s) => s.id === storeIdCookie);
+    if (!found) return null; // store_id étranger -> 401 (withStore)
+    return { user, store: found };
+  }
+  return { user, store: stores[0] };
 }
 
 /** Version route handler: lit le cookie store_id depuis la requête. */

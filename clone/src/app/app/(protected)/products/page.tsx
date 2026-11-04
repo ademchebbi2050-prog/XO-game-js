@@ -2,16 +2,42 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Plus, Search, Package } from "lucide-react";
+import { Plus, Search, Package, FolderPlus } from "lucide-react";
 import { useLocale } from "@/components/locale-provider";
-import { Badge, EmptyState, Skeleton, Price, Button } from "@/components/ui";
+import { Badge, EmptyState, Skeleton, Price, Button, Input } from "@/components/ui";
 
 type Product = { id: string; name: string; priceMinor: number; stock: number; imageUrl: string | null; isActive: boolean; category: { name: string } | null };
+type Category = { id: string; name: string; slug: string };
 
 export default function ProductsPage() {
   const { t } = useLocale();
   const [products, setProducts] = useState<Product[] | null>(null);
   const [q, setQ] = useState("");
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [newCat, setNewCat] = useState("");
+  const [catMsg, setCatMsg] = useState("");
+
+  useEffect(() => {
+    fetch("/api/categories").then((r) => r.json()).then((d) => setCategories(d.categories ?? []));
+  }, []);
+
+  async function createCategory(e: React.FormEvent) {
+    e.preventDefault();
+    setCatMsg("");
+    const res = await fetch("/api/categories", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: newCat }),
+    });
+    if (res.ok) {
+      const d = await res.json();
+      setCategories((c) => [...c, d.category]);
+      setNewCat("");
+      setCatMsg(t("products.categoryCreated"));
+    } else {
+      setCatMsg(t("products.categoryError"));
+    }
+  }
 
   useEffect(() => {
     const h = setTimeout(() => {
@@ -36,6 +62,24 @@ export default function ProductsPage() {
           placeholder={t("common.search")}
           className="h-11 w-full rounded-md border border-border-input bg-surface ps-9 pe-3 text-base"
         />
+      </div>
+      <div className="flex flex-wrap items-center gap-2">
+        {categories.map((c) => (
+          <span key={c.id} className="rounded-full border border-border bg-surface px-3 py-1 text-sm">
+            {c.name}
+          </span>
+        ))}
+        <form onSubmit={createCategory} className="flex items-center gap-2">
+          <Input
+            value={newCat}
+            onChange={(e) => setNewCat(e.target.value)}
+            placeholder={t("products.newCategory")}
+            className="h-9 w-44"
+            aria-label={t("products.newCategory")}
+          />
+          <Button type="submit" variant="secondary" className="h-9"><FolderPlus className="h-4 w-4" />{t("products.addCategory")}</Button>
+        </form>
+        {catMsg && <p className="text-sm text-text-muted">{catMsg}</p>}
       </div>
       {!products && <Skeleton className="h-40" />}
       {products && products.length === 0 && (
