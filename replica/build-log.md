@@ -84,3 +84,19 @@ Livré et testé contre le serveur de prod local :
   de A invisibles depuis B (liste, détail, mutation), suivi public cross-boutique → 404,
   sans session → 401, `store_id` étranger → 401 (**fail-closed corrigé en M2**: auparavant
   repli silencieux sur la première boutique).
+
+## Jalon M3 — livraison simulée & stats (2026-11-04)
+
+- **Étiquette d'expédition**: `GET /api/public/label/[tracking]?slug=<boutique>` renvoie une
+  étiquette HTML imprimable (boutique, n° CMD, tracking, « COD : xx.xxx TND », adresse, transporteur),
+  scoping par slug (cross-boutique → 404, testé). Lien « Étiquette d'expédition » sur la fiche
+  commande (dashboard). Snapshot: `replica/clone-screens/label-expedition-cmd-000013.html`.
+- **Suivi transporteur simulé**: `CarrierAdapter.trackingEvents?` + adapter simulé déterministe
+  (picked_up → in_transit → out_for_delivery → delivered, filtré sur l'heure actuelle).
+  Exposé dans l'API publique de suivi et affiché sur `/order/CMD-xxxxxx` (testé: `shipped` +
+  événement `picked_up` visible). Alias `sim-standard`/`sim-express` enregistrés.
+- **Stats via la vue SQL**: `/api/dashboard/stats` interroge maintenant `store_order_stats`
+  (`$queryRaw`) pour les totaux globaux (CA encaissé = livrées COD, GMV, taux confirmation/
+  livraison/retour) + stats filtrées par période (7d/30d/all) + série CA/jour.
+  Testé: allTime = 11 commandes, CA 163 000 m, taux livraison 50 %, retour 50 %.
+- Re-run `tests/isolation/run.mjs` après M3: 13/13 PASS.

@@ -27,9 +27,9 @@ Redirection WhatsApp depuis une commande,orders,could,yes,yes,changelog v2.4.3
 Variantes produit (taille/couleur) et bundles,catalog,must,yes,no,changelog v2.4.3
 Inventaire temps réel avec blocage de l'oversell,inventory,must,yes,yes,blog guide TN 'real-time inventory tracking'
 Alertes stock faible,inventory,should,yes,yes,infiniéré depuis S05 badges
-Transporteurs configurables par boutique + presets de prix par pays (TN/DZ/LY),delivery,must,yes,partial,S12; intégration via API publiques ou saisie manuelle
+Transporteurs configurables par boutique + presets de prix par pays (TN/DZ/LY),delivery,must,yes,yes,S12; intégration via API publiques ou saisie manuelle
 Choix d'une méthode de livraison + prix affiché par commande,delivery,must,yes,yes,changelog v2.6.0
-Suivi livraison temps réel + étiquette d'expédition,delivery,must,yes,partial,S12/S24
+Suivi livraison temps réel + étiquette d'expédition,delivery,must,yes,yes,S12/S24
 Réconciliation COD (montants à récupérer par transporteur),delivery,must,yes,partial,blog guide TN
 "Dashboard stats temps réel: revenus, commandes, visiteurs, conversion, taux de retour",analytics,must,yes,yes,S04/S13
 Calculateur de rentabilité par unité (coût livraison + coût lead + taux confirmation),analytics,should,yes,no,S13, différenciant marketing

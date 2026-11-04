@@ -14,6 +14,7 @@ type TrackOrder = {
   governorate: string; totalMinor: number; deliveryFeeMinor: number; subtotalMinor: number;
   items: { nameSnapshot: string; priceMinor: number; qty: number }[];
   history: { status: string; note: string | null; createdAt: string }[];
+  trackingEvents: { at: string; code: string; label: string }[];
 };
 
 export default function TrackPage({ params }: { params: Promise<{ number: string }> }) {

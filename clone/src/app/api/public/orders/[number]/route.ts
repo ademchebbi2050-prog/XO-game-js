@@ -1,5 +1,7 @@
 import { prisma } from "@/lib/db";
 import { getStoreBySlug } from "@/lib/tenant";
+import "@/lib/carriers/simulated"; // enregistre l'adapter simulé (événements de suivi)
+import { getCarrier } from "@/lib/carriers";
 
 // GET /api/public/orders/[number]?phone=+216...&slug=boutique-a
 // Suivi public: n° de commande + téléphone + slug de boutique. Données client masquées.
@@ -19,10 +21,23 @@ export async function GET(req: Request, ctx: { params: Promise<{ number: string 
     include: {
       items: { select: { nameSnapshot: true, priceMinor: true, qty: true } },
       statusHistory: { orderBy: { createdAt: "asc" }, select: { status: true, note: true, createdAt: true } },
-      carrier: { select: { name: true } },
+      carrier: { select: { name: true, code: true } },
     },
   });
   if (!order) return Response.json({ error: "NOT_FOUND" }, { status: 404 });
+
+  // Suivi transporteur simulé (événements déterministes depuis l'expédition)
+  let trackingEvents: unknown[] = [];
+  if (order.trackingNumber && order.carrier) {
+    const adapter = getCarrier(order.carrier.code) ?? getCarrier("sim");
+    const shipped = order.statusHistory.filter((h) => h.status === "shipped").pop();
+    if (adapter?.trackingEvents) {
+      trackingEvents = await adapter.trackingEvents(
+        order.trackingNumber,
+        shipped ? shipped.createdAt.toISOString() : null
+      );
+    }
+  }
 
   return Response.json({
     order: {
@@ -30,6 +45,7 @@ export async function GET(req: Request, ctx: { params: Promise<{ number: string 
       status: order.status,
       trackingNumber: order.trackingNumber,
       carrierName: order.carrier?.name ?? null,
+      trackingEvents,
       governorate: order.governorate,
       totalMinor: order.totalMinor,
       deliveryFeeMinor: order.deliveryFeeMinor,

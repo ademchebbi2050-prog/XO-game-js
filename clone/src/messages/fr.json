@@ -107,7 +107,8 @@
    "note": "Note (optionnel)",
    "statusChanged": "Statut mis à jour.",
    "callLogged": "Appel enregistré.",
-   "invalidTransition": "Ce changement de statut n'est pas autorisé."
+   "invalidTransition": "Ce changement de statut n'est pas autorisé.",
+   "label": "Étiquette d'expédition"
   },
   "manual": {
    "title": "Commande manuelle",
@@ -226,7 +227,8 @@
   "notFound": "Commande introuvable. Vérifiez le numéro et le téléphone.",
   "status": "Statut",
   "history": "Suivi",
-  "thanks": "Merci pour votre commande !"
+  "thanks": "Merci pour votre commande !",
+  "events": "Suivi transporteur"
  },
  "confirm": {
   "title": "Confirmation",

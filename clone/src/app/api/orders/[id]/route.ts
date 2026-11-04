@@ -14,7 +14,7 @@ export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }
   return withStore(req, async ({ store }) => {
     const order = await ownedOrder(store.id, id);
     if (!order) return bad("NOT_FOUND", 404);
-    return Response.json({ order });
+    return Response.json({ order, storeSlug: store.slug });
   });
 }
 

@@ -8,6 +8,12 @@ export interface ShipmentResult {
   labelUrl?: string;
 }
 
+export interface TrackingEvent {
+  at: string; // ISO
+  code: string; // picked_up | in_transit | out_for_delivery | delivered
+  label: string;
+}
+
 export interface CarrierAdapter {
   code: string;
   createShipment(order: {
@@ -19,6 +25,8 @@ export interface CarrierAdapter {
     governorate: string;
     totalMinor: number;
   }): Promise<ShipmentResult>;
+  /** Suivi temps réel (optionnel). Le simulé génère des événements déterministes. */
+  trackingEvents?(trackingNumber: string, shippedAt?: string | null): Promise<TrackingEvent[]>;
 }
 
 const adapters = new Map<string, CarrierAdapter>();

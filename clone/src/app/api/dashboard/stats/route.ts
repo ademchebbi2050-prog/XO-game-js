@@ -45,7 +45,24 @@ export async function GET(req: Request) {
       return { date: d, ...(buckets.get(d) ?? { revenue: 0, orders: 0 }) };
     });
 
+    // Totaux globaux via la vue SQL store_order_stats (source de vérité M3: CA, taux).
+    const viewRows = await prisma.$queryRaw<
+      { orders_total: bigint; revenue_minor: bigint; gmv_minor: bigint; orders_confirmed: bigint; orders_shipped: bigint; orders_delivered: bigint; orders_returned: bigint }[]
+    >`select * from store_order_stats where store_id = ${store.id}::uuid`;
+    const v = viewRows[0];
+    const allTime = v
+      ? {
+          ordersTotal: Number(v.orders_total),
+          revenueMinor: Number(v.revenue_minor),
+          gmvMinor: Number(v.gmv_minor),
+          confirmationRate: Number(v.orders_total) ? Number(v.orders_confirmed) / Number(v.orders_total) : 0,
+          deliveryRate: Number(v.orders_shipped) ? Number(v.orders_delivered) / Number(v.orders_shipped) : 0,
+          returnRate: Number(v.orders_shipped) ? Number(v.orders_returned) / Number(v.orders_shipped) : 0,
+        }
+      : null;
+
     return Response.json({
+      allTime,
       stats: {
         ordersTotal: total,
         confirmationRate: total ? confirmed / total : 0,

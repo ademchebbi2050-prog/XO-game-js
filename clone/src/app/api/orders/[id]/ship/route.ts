@@ -42,6 +42,10 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
       note: `Expédiée via ${carrier.name} (${shipment.trackingNumber})`,
       userId: user.id,
     });
-    return Response.json({ order: updated, trackingNumber: shipment.trackingNumber });
+    return Response.json({
+      order: updated,
+      trackingNumber: shipment.trackingNumber,
+      labelUrl: shipment.labelUrl ? `${shipment.labelUrl}?slug=${store.slug}` : null,
+    });
   });
 }

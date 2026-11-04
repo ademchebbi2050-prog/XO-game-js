@@ -33,6 +33,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
   const { id } = use(params);
   const { t, locale } = useLocale();
   const [order, setOrder] = useState<OrderDetail | null>(null);
+  const [storeSlug, setStoreSlug] = useState("");
   const [err, setErr] = useState("");
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
@@ -42,7 +43,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
   async function load() {
     const r = await fetch(`/api/orders/${id}`);
     const d = await r.json();
-    if (r.ok) setOrder(d.order); else setErr(t("common.error"));
+    if (r.ok) { setOrder(d.order); setStoreSlug(d.storeSlug ?? ""); } else setErr(t("common.error"));
   }
   useEffect(() => {
     load();
