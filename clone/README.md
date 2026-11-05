@@ -5,7 +5,7 @@
 Après avoir cloné le dépôt et installé Node.js ≥ 22.18 :
 
 ```powershell
-cd C:\Users\<Toi>\XO-game-js\clone
+cd $env:USERPROFILE\XO-game-js\clone   # ou le dossier où TU as cloné le dépôt
 # double-clic sur start.cmd, OU :
 node scripts/run-all.mjs
 ```
@@ -124,7 +124,7 @@ npm run db:up
 ```
 
 → affiche `PGlite socket server on 127.0.0.1:5433`. Laisser ce terminal ouvert.
-Données persistées dans `C:\Users\<VotreNom>\.pglite-data`.
+Données persistées dans `%USERPROFILE%\.pglite-data` (ex. `C:\Users\SPIRIT\.pglite-data`).
 
 **La toute première fois uniquement**, initialiser le schéma et les données de démo :
 
@@ -168,7 +168,7 @@ npx next start -p 3000 -H 0.0.0.0
 - Port 3000 occupé → lancer `npx next start -p 3001 -H 0.0.0.0` et remplacer `3000` par `3001`
   dans les URLs et dans `NEXT_PUBLIC_ROOT_DOMAIN`.
 - Le `npm run db:up` indique « port 5433 déjà utilisé » → la base tourne déjà, passer à l'étape 7.
-- Réinitialiser la base : supprimer `C:\Users\<VotreNom>\.pglite-data`, relancer `npm run db:up` puis `npm run db:setup`.
+- Réinitialiser la base : supprimer le dossier `%USERPROFILE%\.pglite-data`, relancer `npm run db:up` puis `npm run db:setup`.
 
 ## Commandes récapitulatives (PowerShell)
 

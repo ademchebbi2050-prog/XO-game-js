@@ -2,7 +2,7 @@
 # ============================================================================
 #  start.ps1 — lance TOUT le clone en local en UNE SEULE commande.
 #  Usage (PowerShell) :
-#     cd C:\Users\<Toi>\XO-game-js\clone
+#     cd $env:USERPROFILE\XO-game-js\clone   # ou le dossier où TU as cloné le dépôt
 #     powershell -ExecutionPolicy Bypass -File .\start.ps1
 #  Prérequis : Node.js >= 22.18 (https://nodejs.org, LTS 22.x).
 #  Délègue à scripts/run-all.mjs : base PGlite + schéma + seed + RLS + build +
