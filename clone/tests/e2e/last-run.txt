@@ -1,0 +1,37 @@
+# Dernière exécution e2e — 2026-11-05T21:58:40.795Z
+
+BASE=127.0.0.1:3000
+32/32 OK
+
+- [PASS] F01 — Accueil storefront boutique-a :: GET / (Host boutique-a) -> 200 — status=200
+- [PASS] F01 — Accueil storefront boutique-a :: catalogue public boutique-a -> >=1 produit actif — 1 produit(s)
+- [PASS] F01 — Accueil storefront boutique-a :: la page d'accueil affiche le nom de la boutique (SSR) — Boutique Démo A
+- [PASS] F01 — Accueil storefront boutique-a :: delivery-fee tunis -> feeMinor entier > 0 — feeMinor=5000
+- [PASS] F02 — Fiche produit & catégorie :: GET product detail API -> 200 + bon id — status=200
+- [PASS] F02 — Fiche produit & catégorie :: GET /shop/product/<id> -> 200 — status=200
+- [PASS] F02 — Fiche produit & catégorie :: GET /shop/category/<slug> -> 200 — status=200
+- [PASS] F03 — Checkout COD bout-en-bout :: réapprovisionnement stock produit (PATCH /api/products/<id>) -> 200 — status=200 err=undefined
+- [PASS] F03 — Checkout COD bout-en-bout :: POST commande valide -> 200/201 + number CMD-XXXXXX — status=201 number=CMD-000036
+- [PASS] F03 — Checkout COD bout-en-bout :: rejeu idempotent (même clé) -> même numéro, pas de doublon — status=201 number=CMD-000036
+- [PASS] F03 — Checkout COD bout-en-bout :: totalMinor = subtotalMinor + deliveryFeeMinor (via suivi) — 163000 = 158000 + 5000
+- [PASS] F03 — Checkout COD bout-en-bout :: sous-total = prix unitaire x qty — 158000 vs 79000*2
+- [PASS] F03 — Checkout COD bout-en-bout :: téléphone invalide -> 400 PHONE_INVALID — status=400
+- [PASS] F03 — Checkout COD bout-en-bout :: panier vide -> 400 EMPTY_ORDER — status=400
+- [PASS] F03 — Checkout COD bout-en-bout :: gouvernorat invalide -> 400 INVALID_FORM — status=400 err=INVALID_FORM
+- [PASS] F03 — Checkout COD bout-en-bout :: commande > stock -> 409 OUT_OF_STOCK — status=409 err=OUT_OF_STOCK
+- [PASS] F04 — Suivi public de la commande :: GET /api/public/orders/<number> -> 200 + history contient 'new' — status=200
+- [PASS] F04 — Suivi public de la commande :: mauvais téléphone -> 404 — status=404
+- [PASS] F04 — Suivi public de la commande :: GET /shop/confirm -> 200 — status=200
+- [PASS] F04 — Suivi public de la commande :: GET /shop/order/<number> -> 200 — status=200
+- [PASS] F05 — Dashboard commerçant (login + commandes + transition) :: login credentials -> 302 + cookie session — status=302
+- [PASS] F05 — Dashboard commerçant (login + commandes + transition) :: GET /api/auth/session -> demo@exemple.tn — demo@exemple.tn
+- [PASS] F05 — Dashboard commerçant (login + commandes + transition) :: GET /api/stores -> contient boutique-a — boutique-a,boutique-b
+- [PASS] F05 — Dashboard commerçant (login + commandes + transition) :: GET /api/orders?q=<numéro> -> commande F03 retrouvée — status=200
+- [PASS] F05 — Dashboard commerçant (login + commandes + transition) :: POST status new->to_confirm -> 200 — status=200 err=undefined
+- [PASS] F05 — Dashboard commerçant (login + commandes + transition) :: transition invalide to_confirm->delivered -> 409 — status=409 err=INVALID_TRANSITION
+- [PASS] F05 — Dashboard commerçant (login + commandes + transition) :: GET /app (Host app, session) -> 200 après redirect — status=200
+- [PASS] F05 — Dashboard commerçant (login + commandes + transition) :: GET /api/orders sans session -> 401 — status=401
+- [PASS] F06 — Isolation multi-boutique :: commande boutique-a invisible via slug=boutique-b -> 404 — status=404
+- [PASS] F06 — Isolation multi-boutique :: catalogue boutique-b ne contient aucun produit de boutique-a
+- [PASS] F06 — Isolation multi-boutique :: GET /api/orders (session boutique-a) -> 0 commande étrangère — 27 commande(s), étrangères=0
+- [PASS] F06 — Isolation multi-boutique :: session store_id=boutique-b ne voit pas la commande de boutique-a — commandes boutique-b=0
