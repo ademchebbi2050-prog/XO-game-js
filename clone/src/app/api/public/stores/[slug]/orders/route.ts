@@ -40,14 +40,27 @@ export async function POST(req: Request, ctx: { params: Promise<{ slug: string }
   if (!name || !address || !GOVERNORATES.some((g) => g.slug === governorate)) {
     return Response.json({ error: "INVALID_FORM" }, { status: 400 });
   }
-  const rawItems = (Array.isArray(b.items) ? b.items : []) as { productId?: unknown; qty?: unknown }[];
+  const rawItems = (Array.isArray(b.items) ? b.items : []) as { productId?: unknown; qty?: unknown; variantId?: unknown }[];
   if (!rawItems.length) return Response.json({ error: "EMPTY_ORDER" }, { status: 400 });
+
+  // M5: moyen de paiement (cod par défaut, 'card' = PSP simulé)
+  const paymentMethod = b.paymentMethod === "card" ? "card" : "cod";
 
   const productIds = rawItems.map((i) => String(i.productId ?? "")).filter(Boolean);
   const products = await prisma.product.findMany({
     where: { id: { in: productIds }, storeId: store.id, isActive: true },
   });
   const byId = new Map(products.map((p) => [p.id, p]));
+  // M5: variantes actives des produits commandés (prix = base + delta, stock sur la variante)
+  const variantIds = rawItems.map((i) => String(i.variantId ?? "")).filter(Boolean);
+  const variants = new Map<string, { id: string; product_id: string; label: string; price_delta_minor: number; stock: number }>();
+  if (variantIds.length) {
+    const vrows = await prisma.$queryRawUnsafe<{ id: string; product_id: string; label: string; price_delta_minor: number; stock: number }[]>(
+      `select id, product_id, label, price_delta_minor, stock from product_variants
+       where id = any($1::uuid[]) and is_active = true`, variantIds as unknown as string[]
+    );
+    for (const v of vrows) variants.set(v.id, v);
+  }
   const items = [];
   for (const i of rawItems) {
     const p = byId.get(String(i.productId ?? ""));
@@ -55,7 +68,20 @@ export async function POST(req: Request, ctx: { params: Promise<{ slug: string }
     if (!p || !Number.isInteger(qty) || qty <= 0) {
       return Response.json({ error: "ITEM_INVALID" }, { status: 400 });
     }
-    items.push({ productId: p.id, name: p.name, priceMinor: p.priceMinor, qty });
+    // M5: variante?
+    const vid = String(i.variantId ?? "");
+    const v = vid ? variants.get(vid) : undefined;
+    if (vid && (!v || v.product_id !== p.id)) {
+      return Response.json({ error: "VARIANT_INVALID" }, { status: 400 });
+    }
+    items.push({
+      productId: p.id,
+      variantId: v?.id ?? null,
+      variantLabel: v?.label ?? null,
+      name: v ? `${p.name} — ${v.label}` : p.name,
+      priceMinor: p.priceMinor + (v ? Number(v.price_delta_minor) : 0),
+      qty,
+    });
   }
 
   const rate = await prisma.deliveryRate.findUnique({
@@ -79,9 +105,26 @@ export async function POST(req: Request, ctx: { params: Promise<{ slug: string }
       items,
       deliveryFeeMinor,
       idempotencyKey,
+      paymentMethod, // M5
     });
     if (!replayed) await hitRateLimit(rules);
-    return Response.json({ order: { id: order.id, number: order.number, totalMinor: order.totalMinor, status: order.status } }, { status: 201 });
+    // M5: paiement carte -> transaction PSP 'pending' + URL du hosted-checkout simulé
+    let payment: { pspRef: string; payUrl: string; amountMinor: number } | null = null;
+    if (paymentMethod === "card" && !replayed) {
+      const { createPspTransaction } = await import("@/lib/psp");
+      const tx = await createPspTransaction({ orderId: order.id, amountMinor: order.totalMinor });
+      payment = { pspRef: tx.pspRef, payUrl: `/pay/${tx.pspRef}`, amountMinor: tx.amountMinor };
+    } else if (paymentMethod === "card") {
+      const { getPspByRef } = await import("@/lib/psp");
+      const rows = await prisma.$queryRawUnsafe<{ psp_ref: string; amount_minor: number }[]>(
+        "select psp_ref, amount_minor from psp_transactions where order_id = $1 order by created_at desc limit 1", order.id
+      );
+      if (rows[0]) payment = { pspRef: rows[0].psp_ref, payUrl: `/pay/${rows[0].psp_ref}`, amountMinor: Number(rows[0].amount_minor) };
+    }
+    return Response.json({
+      order: { id: order.id, number: order.number, totalMinor: order.totalMinor, status: order.status, paymentMethod: order.paymentMethod, paymentStatus: order.paymentStatus },
+      payment,
+    }, { status: 201 });
   } catch (e) {
     const msg = e instanceof Error ? e.message : "ORDER_FAILED";
     if (msg.startsWith("OUT_OF_STOCK")) {

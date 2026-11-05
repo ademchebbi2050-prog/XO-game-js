@@ -12,6 +12,7 @@ import type { OrderStatus, CallOutcome } from "@/generated/prisma/client";
 
 type OrderDetail = {
   id: string; number: string; status: OrderStatus; customerName: string; customerPhone: string;
+  paymentMethod: string; // M5
   governorate: string; address: string; subtotalMinor: number; deliveryFeeMinor: number; discountMinor: number;
   totalMinor: number; trackingNumber: string | null; paymentStatus: string; createdAt: string;
   items: { nameSnapshot: string; priceMinor: number; qty: number }[];
@@ -122,7 +123,15 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
         <p><span className="font-semibold">{t("orders.detail.phone")}:</span> <PhoneLink phone={order.customerPhone} /></p>
         <p><span className="font-semibold">{t("orders.detail.governorate")}:</span> {governorateLabel(order.governorate, locale)}</p>
         <p><span className="font-semibold">{t("orders.detail.address")}:</span> {order.address}</p>
-        <p><span className="font-semibold">{t("orders.detail.payment")}:</span> <span className="ltr-island">{order.paymentStatus}</span></p>
+        <p><span className="font-semibold">{t("orders.detail.payment")}:</span> <span className="ltr-island">{order.paymentMethod === "card" ? t("orders.detail.card") : t("orders.detail.cod")} — {order.paymentStatus}</span></p>
+        {/* M5: remboursement (carte, payée) */}
+        {order.paymentMethod === "card" && order.paymentStatus === "paid" && (
+          <Button variant="danger" className="sm:w-auto" onClick={async () => {
+            if (!confirm(t("orders.refundConfirm"))) return;
+            const r = await fetch(`/api/orders/${order.id}/refund`, { method: "POST" });
+            if (r.ok) window.location.reload();
+          }}>{t("orders.refund")}</Button>
+        )}
         {order.trackingNumber && (
           <p><span className="font-semibold">{t("orders.detail.tracking")}:</span> <span className="ltr-island font-mono text-xs">{order.trackingNumber}</span> {order.carrier?.name ? `(${order.carrier.name})` : ""}</p>
         )}

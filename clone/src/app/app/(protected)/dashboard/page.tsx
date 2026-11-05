@@ -7,7 +7,7 @@ import { Card, EmptyState, Skeleton, StatusPill, Price, PhoneLink } from "@/comp
 import { formatPercent } from "@/lib/format";
 
 type Stats = {
-  stats: { ordersTotal: number; confirmationRate: number; deliveryRate: number; revenueMinor: number };
+  stats: { ordersTotal: number; confirmationRate: number; deliveryRate: number; revenueMinor: number; commissionBps?: number; commissionMinor?: number; netMinor?: number }; // M5
   series: { date: string; revenue: number; orders: number }[];
   recent: { id: string; number: string; customerName: string; customerPhone: string; totalMinor: number; status: string; createdAt: string }[];
 };
@@ -69,6 +69,17 @@ export default function DashboardPage() {
             <Card>
               <p className="text-xs font-medium text-text-muted">{t("dashboard.revenue")}</p>
               <p className="mt-1 text-2xl font-extrabold"><Price minor={data.stats.revenueMinor} /></p>
+            </Card>
+          </div>
+          {/* M5: commission plateforme + net */}
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+            <Card>
+              <p className="text-xs font-medium text-text-muted">{t("dashboard.commission")} ({data.stats.commissionBps ?? 0} bps)</p>
+              <p className="mt-1 text-xl font-extrabold text-warning"><Price minor={data.stats.commissionMinor ?? 0} /></p>
+            </Card>
+            <Card>
+              <p className="text-xs font-medium text-text-muted">{t("dashboard.net")}</p>
+              <p className="mt-1 text-xl font-extrabold text-success"><Price minor={data.stats.netMinor ?? 0} /></p>
             </Card>
           </div>
 

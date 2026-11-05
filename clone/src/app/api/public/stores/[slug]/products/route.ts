@@ -19,5 +19,19 @@ export async function GET(req: Request, ctx: { params: Promise<{ slug: string }>
     orderBy: { createdAt: "desc" },
     select: { id: true, name: true, description: true, priceMinor: true, stock: true, imageUrl: true, category: { select: { name: true, slug: true } } },
   });
-  return Response.json({ products });
+  // M5: variantes actives (prix mini = base + delta min, stock agrégé)
+  const vmap = await import("@/lib/variants").then((m) => m.listActiveVariantsForProducts(products.map((p) => p.id)));
+  return Response.json({
+    products: products.map((p) => {
+      const vs = vmap.get(p.id) ?? [];
+      const hasVariants = vs.length > 0;
+      return {
+        ...p,
+        variants: vs,
+        hasVariants,
+        displayPriceMinor: hasVariants ? p.priceMinor + Math.min(...vs.map((v) => v.priceDeltaMinor)) : p.priceMinor,
+        displayStock: hasVariants ? vs.reduce((s, v) => s + v.stock, 0) : p.stock,
+      };
+    }),
+  });
 }

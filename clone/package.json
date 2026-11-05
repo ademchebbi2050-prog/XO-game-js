@@ -11,10 +11,11 @@
     "db:up": "node scripts/pglite-server.mjs",
     "db:seed": "node scripts/seed.mjs",
     "db:setup": "npm run db:init && npm run db:seed",
-    "postinstall": "prisma generate && node scripts/patch-prisma-wasm.mjs",
+    "postinstall": "prisma generate && node scripts/patch-prisma-wasm.mjs && node scripts/patch-prisma-m5.mjs",
     "db:init": "node scripts/init-db.mjs",
     "postgenerate": "node scripts/patch-prisma-wasm.mjs",
-    "start:all": "node scripts/run-all.mjs"
+    "start:all": "node scripts/run-all.mjs",
+    "migrate:m5": "node scripts/migrate-m5.mjs"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^6.19.3",

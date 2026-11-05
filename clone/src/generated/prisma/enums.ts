@@ -34,7 +34,8 @@ export type CallOutcome = (typeof CallOutcome)[keyof typeof CallOutcome]
 
 
 export const PaymentMethod = {
-  cod: 'cod'
+  cod: 'cod',
+  card: 'card'
 } as const
 
 export type PaymentMethod = (typeof PaymentMethod)[keyof typeof PaymentMethod]
@@ -43,6 +44,7 @@ export type PaymentMethod = (typeof PaymentMethod)[keyof typeof PaymentMethod]
 export const PaymentStatus = {
   pending: 'pending',
   paid: 'paid',
+  failed: 'failed',
   refunded: 'refunded'
 } as const
 

@@ -120,7 +120,7 @@ log("✅ PGlite socket server on 127.0.0.1:5433");
 
 // --- 4. schéma + seed + RLS (idempotents) — ASYNC ---
 try {
-  for (const s of ["scripts/init-db.mjs", "scripts/seed.mjs", "scripts/enable-rls.mjs"]) {
+  for (const s of ["scripts/init-db.mjs", "scripts/migrate-m5.mjs", "scripts/seed.mjs", "scripts/enable-rls.mjs"]) {
     await run("node", [s]);
   }
 } catch {

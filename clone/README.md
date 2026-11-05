@@ -191,3 +191,13 @@ node tests/isolation/run.mjs         # 20/20 PASS attendus
 #   http://app.localhost:3000/app/login   (demo@exemple.tn / demo1234)
 #   http://boutique-a.localhost:3000/
 ```
+
+## M5 — fonctionnalités avancées (2026-11-05)
+
+- **Paiement carte (PSP simulé « SimPSP »)** : au checkout, choisir « Carte bancaire » → hosted-checkout `/pay/<PSP-…>` (boutons Payer/Refuser en démo) → webhook signé HMAC `/api/webhooks/psp` (idempotent) → remboursement possible depuis le détail commande. En prod : remplacer SimPSP par Flouci/Paymee/CIB (même contrat). Secret : `SIMPSP_WEBHOOK_SECRET` dans `.env`.
+- **Variantes de produits** : taille/couleur avec stock et delta de prix propres (éditeur dans Produits), prix = base + delta, stock décrémenté sur la variante, snapshot en commande.
+- **Thèmes no-code** : 4 presets + couleurs libres dans Réglages → Apparence, appliqués en direct à ta boutique (sous-domaine) via variables CSS.
+- **Notifications push** : page `/app/notifications` — activer (simulé en local, Web Push VAPID en prod), chaque changement de statut de commande émet une notification (outbox consultable).
+- **Commission plateforme** : `commissionBps` dans Réglages (500 = 5 % par défaut), cartes Commission / CA net au dashboard.
+
+Tests : `node tests/e2e/run.mjs` → F01–F11 (57 contrôles, HTTP réel). Migration M5 auto au lancement (`scripts/run-all.mjs` appelle `scripts/migrate-m5.mjs`).

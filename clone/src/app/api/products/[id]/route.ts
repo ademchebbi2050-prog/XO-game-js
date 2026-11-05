@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db";
 import { withStore, bad } from "@/lib/api";
+import { listVariants, saveVariants } from "@/lib/variants";
 
 async function getOwnedProduct(storeId: string, id: string) {
   return prisma.product.findFirst({ where: { id, storeId } });
@@ -10,7 +11,8 @@ export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }
   return withStore(req, async ({ store }) => {
     const product = await getOwnedProduct(store.id, id);
     if (!product) return bad("NOT_FOUND", 404);
-    return Response.json({ product });
+    const variants = await listVariants(product.id); // M5
+    return Response.json({ product: { ...product, variants } });
   });
 }
 
@@ -31,7 +33,12 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
     if (typeof b.categoryId === "string" || b.categoryId === null) data.categoryId = b.categoryId || null;
     if (typeof b.isActive === "boolean") data.isActive = b.isActive;
     const updated = await prisma.product.update({ where: { id: product.id }, data });
-    return Response.json({ product: updated });
+    // M5: variantes (upsert/suppression)
+    let variants: unknown[] = await listVariants(product.id);
+    if (Array.isArray(b.variants)) {
+      variants = await saveVariants(product.id, b.variants as { id?: string; label: string }[]);
+    }
+    return Response.json({ product: { ...updated, variants } });
   });
 }
 

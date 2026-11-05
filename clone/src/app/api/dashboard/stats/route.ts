@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db";
 import { withStore } from "@/lib/api";
+import { commissionBps, commissionFor } from "@/lib/theme";
 
 // GET: stats du tableau de bord (range=7d|30d|all)
 export async function GET(req: Request) {
@@ -22,6 +23,10 @@ export async function GET(req: Request) {
     const shipped = count("shipped") + count("delivered") + count("returned");
     const delivered = count("delivered");
     const revenue = orders.filter((o) => o.status === "delivered").reduce((s, o) => s + o.totalMinor, 0);
+    // M5: commission plateforme (bps sur le CA livré) + net
+    const bps = commissionBps(store.settings);
+    const commissionMinor = commissionFor(revenue, bps);
+    const netMinor = revenue - commissionMinor;
 
     const recent = await prisma.order.findMany({
       where: { storeId: store.id },
@@ -69,6 +74,9 @@ export async function GET(req: Request) {
         deliveryRate: shipped ? delivered / shipped : 0,
         returnRate: shipped ? count("returned") / shipped : 0,
         revenueMinor: revenue,
+        commissionBps: bps,          // M5
+        commissionMinor,             // M5
+        netMinor,                    // M5
         counts: {
           new: count("new"),
           to_confirm: count("to_confirm"),

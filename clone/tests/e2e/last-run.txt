@@ -1,7 +1,7 @@
-# Dernière exécution e2e — 2026-11-05T21:58:40.795Z
+# Dernière exécution e2e — 2026-11-05T22:28:29.508Z
 
 BASE=127.0.0.1:3000
-32/32 OK
+57/57 OK
 
 - [PASS] F01 — Accueil storefront boutique-a :: GET / (Host boutique-a) -> 200 — status=200
 - [PASS] F01 — Accueil storefront boutique-a :: catalogue public boutique-a -> >=1 produit actif — 1 produit(s)
@@ -10,9 +10,9 @@ BASE=127.0.0.1:3000
 - [PASS] F02 — Fiche produit & catégorie :: GET product detail API -> 200 + bon id — status=200
 - [PASS] F02 — Fiche produit & catégorie :: GET /shop/product/<id> -> 200 — status=200
 - [PASS] F02 — Fiche produit & catégorie :: GET /shop/category/<slug> -> 200 — status=200
-- [PASS] F03 — Checkout COD bout-en-bout :: réapprovisionnement stock produit (PATCH /api/products/<id>) -> 200 — status=200 err=undefined
-- [PASS] F03 — Checkout COD bout-en-bout :: POST commande valide -> 200/201 + number CMD-XXXXXX — status=201 number=CMD-000036
-- [PASS] F03 — Checkout COD bout-en-bout :: rejeu idempotent (même clé) -> même numéro, pas de doublon — status=201 number=CMD-000036
+- [PASS] F03 — Checkout COD bout-en-bout :: réapprovisionnement stock produit si besoin (PATCH /api/products/<id>) — stock 50 -> 50
+- [PASS] F03 — Checkout COD bout-en-bout :: POST commande valide -> 200/201 + number CMD-XXXXXX — status=201 number=CMD-000105
+- [PASS] F03 — Checkout COD bout-en-bout :: rejeu idempotent (même clé) -> même numéro, pas de doublon — status=201 number=CMD-000105
 - [PASS] F03 — Checkout COD bout-en-bout :: totalMinor = subtotalMinor + deliveryFeeMinor (via suivi) — 163000 = 158000 + 5000
 - [PASS] F03 — Checkout COD bout-en-bout :: sous-total = prix unitaire x qty — 158000 vs 79000*2
 - [PASS] F03 — Checkout COD bout-en-bout :: téléphone invalide -> 400 PHONE_INVALID — status=400
@@ -33,5 +33,30 @@ BASE=127.0.0.1:3000
 - [PASS] F05 — Dashboard commerçant (login + commandes + transition) :: GET /api/orders sans session -> 401 — status=401
 - [PASS] F06 — Isolation multi-boutique :: commande boutique-a invisible via slug=boutique-b -> 404 — status=404
 - [PASS] F06 — Isolation multi-boutique :: catalogue boutique-b ne contient aucun produit de boutique-a
-- [PASS] F06 — Isolation multi-boutique :: GET /api/orders (session boutique-a) -> 0 commande étrangère — 27 commande(s), étrangères=0
+- [PASS] F06 — Isolation multi-boutique :: GET /api/orders (session boutique-a) -> 0 commande étrangère — 37 commande(s), étrangères=0
 - [PASS] F06 — Isolation multi-boutique :: session store_id=boutique-b ne voit pas la commande de boutique-a — commandes boutique-b=0
+- [PASS] F07 — Paiement carte PSP simulé (SimPSP) :: POST commande carte -> 201 + payment.pspRef + payUrl — status=201 psp=PSP-7EE718F993
+- [PASS] F07 — Paiement carte PSP simulé (SimPSP) :: order.paymentMethod = card, paymentStatus = pending
+- [PASS] F07 — Paiement carte PSP simulé (SimPSP) :: GET /api/public/psp/<ref> -> pending + montant = total
+- [PASS] F07 — Paiement carte PSP simulé (SimPSP) :: GET /pay/<ref> (hosted-checkout simulé) -> 200 — status=200
+- [PASS] F07 — Paiement carte PSP simulé (SimPSP) :: POST confirm approve -> paid + authCode + order.paymentStatus=paid — status=200
+- [PASS] F07 — Paiement carte PSP simulé (SimPSP) :: rejeu confirm -> idempotent (toujours paid)
+- [PASS] F07 — Paiement carte PSP simulé (SimPSP) :: webhook signature invalide -> 401 — status=401
+- [PASS] F07 — Paiement carte PSP simulé (SimPSP) :: webhook signé payment.refunded -> 200 + status refunded — status=200 -> refunded
+- [PASS] F07 — Paiement carte PSP simulé (SimPSP) :: GET psp après webhook -> refunded
+- [PASS] F08 — Variantes de produits (M5) :: fiche produit publique -> variantes actives présentes (S/M/L) — S,M,L,XL
+- [PASS] F08 — Variantes de produits (M5) :: commande avec variantId -> 201 — status=201 err=undefined
+- [PASS] F08 — Variantes de produits (M5) :: prix = base + delta variante (L = +5000) et snapshot nom contient le label — price=84000 name=Produit démo boutique-a — L
+- [PASS] F08 — Variantes de produits (M5) :: stock de la variante décrémenté de qty — 7 -> 5
+- [PASS] F08 — Variantes de produits (M5) :: variantId inconnu -> 400 VARIANT_INVALID — status=400
+- [PASS] F08 — Variantes de produits (M5) :: qty > stock variante -> 409 OUT_OF_STOCK
+- [PASS] F08 — Variantes de produits (M5) :: PATCH produit avec variantes (ajout XL) -> 200 + 4 variantes — status=200 n=4
+- [PASS] F09 — Thème no-code de la boutique (M5) :: PATCH settings.theme (preset nuit) -> 200 — status=200
+- [PASS] F09 — Thème no-code de la boutique (M5) :: storefront boutique-a injecte les variables du thème (#E8734A dans le HTML) — status=200
+- [PASS] F09 — Thème no-code de la boutique (M5) :: thème persisté dans stores.settings — status=200
+- [PASS] F09 — Thème no-code de la boutique (M5) :: thème restauré (terre) -> #A83E14 présent
+- [PASS] F10 — Notifications push simulées (M5) :: POST /api/push/subscribe -> 200 — status=200
+- [PASS] F10 — Notifications push simulées (M5) :: transition to_confirm->confirmed -> 200 — status=200 err=undefined
+- [PASS] F10 — Notifications push simulées (M5) :: push émise à la transition (outbox: titre + url /app/orders/<id>) — Statut : Confirmée
+- [PASS] F11 — Commission plateforme / pricing (M5) :: seed: commissionBps = 500 dans settings — bps=500
+- [PASS] F11 — Commission plateforme / pricing (M5) :: stats: commissionMinor = floor(revenue*500/10000) et netMinor = revenue - commission — rev=163000 comm=8150 net=154850

@@ -23,6 +23,7 @@ export default function CheckoutPage() {
   const [error, setError] = useState("");
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<"cod" | "card">("cod"); // M5
 
   useEffect(() => {
     setItems(getCart(slug));
@@ -61,7 +62,8 @@ export default function CheckoutPage() {
         customerPhone: p,
         governorate,
         address: address.trim(),
-        items: items.map((i) => ({ productId: i.productId, qty: i.qty })),
+        items: items.map((i) => ({ productId: i.productId, variantId: i.variantId ?? null, qty: i.qty })), // M5: variante
+        paymentMethod, // M5
       }),
     });
     const d = await res.json().catch(() => ({}));
@@ -71,6 +73,11 @@ export default function CheckoutPage() {
     if (res.status === 409 && d.error === "OUT_OF_STOCK") { setError(t("checkout.outOfStock", { name: d.product ?? "" })); return; }
     if (!res.ok) { setError(t("checkout.invalid")); return; }
     setCart(slug, []);
+    // M5: carte -> hosted-checkout PSP simulé, puis confirmation
+    if (d.payment?.payUrl) {
+      router.push(`${d.payment.payUrl}?number=${d.order.number}&phone=${encodeURIComponent(p)}`);
+      return;
+    }
     router.push(`/shop/confirm?number=${d.order.number}&phone=${encodeURIComponent(p)}`);
   }
 
@@ -97,14 +104,25 @@ export default function CheckoutPage() {
           <div className="rounded-md bg-surface-subtle p-3 text-sm">
             <p className="font-semibold">{t("checkout.deliveryMethod")}</p>
             <p className="mt-1 flex justify-between"><span>{t("checkout.deliveryFee")}</span><Price minor={feeMinor} /></p>
-            <p className="mt-1 font-semibold">{t("checkout.paymentCod")}</p>
           </div>
+          {/* M5: moyen de paiement */}
+          <fieldset className="flex flex-col gap-2">
+            <legend className="text-sm font-semibold">{t("checkout.paymentMethod")}</legend>
+            <label className={`flex cursor-pointer items-center gap-2 rounded-md border p-3 text-sm font-semibold ${paymentMethod === "cod" ? "border-accent bg-accent-soft" : "border-border-input bg-surface"}`}>
+              <input type="radio" name="pay" checked={paymentMethod === "cod"} onChange={() => setPaymentMethod("cod")} className="accent-[var(--accent)]" />
+              {t("checkout.paymentCod")}
+            </label>
+            <label className={`flex cursor-pointer items-center gap-2 rounded-md border p-3 text-sm font-semibold ${paymentMethod === "card" ? "border-accent bg-accent-soft" : "border-border-input bg-surface"}`}>
+              <input type="radio" name="pay" checked={paymentMethod === "card"} onChange={() => setPaymentMethod("card")} className="accent-[var(--accent)]" />
+              {t("checkout.paymentCard")} <span className="text-xs font-normal text-text-muted">({t("checkout.paymentCardSim")})</span>
+            </label>
+          </fieldset>
         </Card>
 
         <Card className="flex flex-col gap-2 text-sm">
           <p className="font-semibold">{t("checkout.summary")}</p>
           {items.map((i) => (
-            <div key={i.productId} className="flex justify-between gap-2">
+            <div key={`${i.productId}::${i.variantId ?? ""}`} className="flex justify-between gap-2">
               <span className="truncate">{i.name} <span className="ltr-island text-text-muted">×{i.qty}</span></span>
               <Price minor={i.priceMinor * i.qty} />
             </div>

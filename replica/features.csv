@@ -1,7 +1,7 @@
 feature,area,priority,original,clone,notes
 "Inscription commerçant (email + mot de passe, session persistante)",onboarding,must,yes,yes,"S01/S02, changelog 'persistant session'"
 "Onboarding en 4 étapes (compte, design boutique, produits, résultats)",onboarding,must,yes,yes,"S03, landing 'quatre étapes simples'"
-Choix de thème parmi une galerie nommée + éditeur visuel no-code,storefront,must,yes,no,"S14, thèmes propres requis (clean-room), pas ceux de Converty"
+Choix de thème parmi une galerie nommée + éditeur visuel no-code,storefront,must,yes,yes,"M5: 4 presets (terre/nuit/pastel/olive) + couleurs libres, injectés en CSS vars par sous-domaine; éditeur dans Réglages"
 Sous-domaine gratuit + connexion domaine personnalisé,storefront,must,yes,partial,"FAQ landing, S15"
 Publication de la boutique en < 30 min,storefront,must,yes,yes,claim landing; KPI à battre
 Accueil boutique avec bannières et mise en avant,storefront,must,yes,partial,S19
@@ -10,7 +10,7 @@ Catalogue / catégories avec filtres et pagination,storefront,must,yes,yes,S20
 Panier avec quantités et total,storefront,must,yes,yes,S22
 "Checkout multi-étapes: contact, adresse/gouvernorat, livraison, paiement",checkout,must,yes,partial,S23
 Paiement à la livraison (COD) natif,payments,must,yes,yes,>70% des transactions en TN; cœur du positionnement
-"Paiement en ligne par carte (via PSP licenciés: Flouci, Paymee, CIB...)",payments,must,yes,no,"on intègre des PSP existants, pas de licence propre"
+"Paiement en ligne par carte (via PSP licenciés: Flouci, Paymee, CIB...)",payments,must,yes,yes,"M5: SimPSP simulé (hosted-checkout /pay/<ref>, webhook signé HMAC idempotent, remboursement) — en prod: Flouci/Paymee/CIB"
 "Code promo / coupon (%, fixe, limites, expiration)",checkout,should,yes,no,"changelog v2.5.7, S22/S23/S08"
 Champs de checkout personnalisés (activés/désactivés par produit),checkout,should,yes,no,changelog Play 'product-specific checkout fields'
 Page de confirmation + suivi de commande client,storefront,must,yes,yes,S24
@@ -24,7 +24,7 @@ Badges repeat buyer et statuts sur les cartes commande,orders,could,yes,no,chang
 "Échange de commande (commande liée, flux dédié)",orders,could,yes,no,changelog v2.5.7
 Redirection WhatsApp depuis une commande,orders,could,yes,yes,changelog v2.4.3
 "Gestion des produits: images, prix, coût, stock, code-barres",catalog,must,yes,yes,S06
-Variantes produit (taille/couleur) et bundles,catalog,must,yes,no,changelog v2.4.3
+Variantes produit (taille/couleur) et bundles,catalog,must,yes,yes,"M5: variantes (label, sku, delta prix, stock propre) — bundles: non (hors périmètre MVP)"
 Inventaire temps réel avec blocage de l'oversell,inventory,must,yes,yes,blog guide TN 'real-time inventory tracking'
 Alertes stock faible,inventory,should,yes,yes,infiniéré depuis S05 badges
 Transporteurs configurables par boutique + presets de prix par pays (TN/DZ/LY),delivery,must,yes,yes,S12; intégration via API publiques ou saisie manuelle
@@ -36,13 +36,13 @@ Calculateur de rentabilité par unité (coût livraison + coût lead + taux conf
 Rapports exportables,analytics,could,yes,no,guess
 "Multi-store: switch entre boutiques, rôles owner / agent de confirmation",team,must,yes,yes,"changelog v2.3.0, Membership"
 Fil d'activité équipe filtrable,team,could,yes,no,"S17, changelog v2.2.5"
-Notifications in-app + push mobile sur nouvelles commandes,notifications,must,yes,no,"S04 bell, app mobile"
+Notifications in-app + push mobile sur nouvelles commandes,notifications,must,yes,partial,M5: push simulées (abonnement + outbox push_events émise au changement de statut); in-app bell: non; mobile: non
 "Sécurité anti-fraude COD: vérification téléphone, IP blocker, restrictions de pays",security,should,yes,yes,"blog comparatif, changelog v2.2.5"
 "Intégrations marketing: Facebook (Meta), Google Analytics, Search Console, Google Sheets",integrations,should,yes,no,landing
 Générateur de landing page par IA,ai,could,yes,no,landing; nos propres modèles
 Chatbot IA support client sur la boutique,ai,could,yes,no,landing
 "Facturation conforme fiscalité tunisienne (champs fiscaux, PDF)",billing,should,yes,no,"landing; on implémente les champs, pas la conformité légale"
-"Modèle de pricing: gratuit jusqu'à 10 000 TND de ventes puis commission 0,3 %",billing,must,yes,no,CGU + landing; cœur du business model
+"Modèle de pricing: gratuit jusqu'à 10 000 TND de ventes puis commission 0,3 %",billing,must,yes,yes,"M5: commissionBps par boutique (seed 500 = 5%), stats CA/commission/net; paliers de gratuité: non"
 Option abonnement fixe mensuel/annuel au-delà de 90 000 TND/30 j (à partir de 99 $),billing,should,yes,no,CGU
 Support 7j/7 09:00-00:00 (WhatsApp + email),support,could,yes,no,"service humain, hors scope produit"
 "App mobile iOS/Android (commandes, stats, scanner code-barres, multi-store)",mobile,could,yes,no,"S25; XL, après le MVP web"

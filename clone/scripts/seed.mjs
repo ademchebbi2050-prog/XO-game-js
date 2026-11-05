@@ -33,8 +33,11 @@ try {
   for (const slug of ["boutique-a", "boutique-b"]) {
     const s = await client.query(
       `INSERT INTO stores (owner_id, name, slug, status, settings)
-       VALUES ($1,$2,$3,'published','{"codEnabled":true}')
-       ON CONFLICT (slug) DO NOTHING RETURNING id`,
+       VALUES ($1,$2,$3,'published','{"codEnabled":true,"commissionBps":500}')
+       ON CONFLICT (slug) DO UPDATE SET settings = jsonb_set(
+         coalesce(stores.settings, '{}'::jsonb),
+         '{commissionBps}', '500'::jsonb
+       ) RETURNING id`,
       [userId, slug === "boutique-a" ? "Boutique Démo A" : "Boutique Démo B", slug]
     );
     let storeId = s.rows[0]?.id;
@@ -53,6 +56,20 @@ try {
        ON CONFLICT (store_id, barcode) DO NOTHING`,
       [storeId, catId, `Produit démo ${slug}`, "Produit de démonstration (données seed)."]
     );
+    // M5: variantes du produit démo (tailles, avec stock + delta de prix)
+    const prod = await client.query(
+      "SELECT id FROM products WHERE store_id=$1 AND barcode='DEMO-001'", [storeId]
+    );
+    if (prod.rows[0]) {
+      for (const [label, delta, stock] of [["S", -5000, 8], ["M", 0, 10], ["L", 5000, 7]]) {
+        await client.query(
+          `INSERT INTO product_variants (product_id, label, sku, price_delta_minor, stock, is_active)
+           VALUES ($1,$2,$3,$4,$5,true)
+           ON CONFLICT (product_id, label) DO UPDATE SET stock = EXCLUDED.stock, price_delta_minor = EXCLUDED.price_delta_minor`,
+          [prod.rows[0].id, label, `DEMO-001-${label}`, delta, stock]
+        );
+      }
+    }
     for (const g of GOVERNORATES) {
       await client.query(
         `INSERT INTO delivery_rates (store_id, governorate, fee_minor) VALUES ($1,$2,$3)

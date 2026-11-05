@@ -12,7 +12,7 @@ export async function GET() {
   const stores = await prisma.store.findMany({
     where: { ownerId: user.id },
     orderBy: { createdAt: "asc" },
-    select: { id: true, name: true, slug: true, status: true, defaultLocale: true, currency: true },
+    select: { id: true, name: true, slug: true, status: true, defaultLocale: true, currency: true, settings: true }, // M5: settings (theme, commissionBps)
   });
   return Response.json({ stores });
 }

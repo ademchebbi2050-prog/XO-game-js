@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { signOut } from "next-auth/react";
-import { Home, ShoppingBag, Package, Truck, Settings, LogOut, Store, type LucideIcon } from "lucide-react";
+import { Home, ShoppingBag, Package, Truck, Settings, LogOut, Store, Bell, type LucideIcon } from "lucide-react";
 import { useLocale } from "@/components/locale-provider";
 import { LangSwitch } from "@/components/ui";
 
@@ -14,6 +14,7 @@ const NAV: { href: string; icon: LucideIcon; key: string; badge?: boolean }[] = 
   { href: "/app/products", icon: Package, key: "nav.products" },
   { href: "/app/delivery", icon: Truck, key: "nav.delivery" },
   { href: "/app/settings", icon: Settings, key: "nav.settings" },
+  { href: "/app/notifications", icon: Bell, key: "nav.notifications" }, // M5
 ];
 
 export default function DashboardShell({ userName, children }: { userName: string; children: React.ReactNode }) {

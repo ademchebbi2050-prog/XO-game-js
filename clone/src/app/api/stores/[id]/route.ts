@@ -10,7 +10,11 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
     const data: Record<string, unknown> = {};
     if (typeof b.name === "string" && b.name.trim()) data.name = b.name.trim();
     if (b.status === "draft" || b.status === "published") data.status = b.status;
-    if (typeof b.settings === "object" && b.settings) data.settings = b.settings;
+    // M5: merge superficiel des settings (theme, commissionBps, defaultDeliveryFeeMinor...)
+    if (typeof b.settings === "object" && b.settings) {
+      const cur = (store.settings ?? {}) as Record<string, unknown>;
+      data.settings = { ...cur, ...(b.settings as Record<string, unknown>) };
+    }
     const updated = await prisma.store.update({ where: { id: store.id }, data });
     return Response.json({ store: updated });
   });

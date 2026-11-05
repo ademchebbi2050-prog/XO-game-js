@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db";
 import { withStore, bad } from "@/lib/api";
 import { inputToMinor } from "@/lib/money";
+import { listVariants, saveVariants } from "@/lib/variants";
 
 // GET: liste des produits de la boutique active (filtres: q, active)
 export async function GET(req: Request) {
@@ -15,7 +16,9 @@ export async function GET(req: Request) {
       orderBy: { createdAt: "desc" },
       include: { category: { select: { name: true, slug: true } } },
     });
-    return Response.json({ products });
+    // M5: variantes actives de chaque produit
+    const vmap = await import("@/lib/variants").then((m) => m.listActiveVariantsForProducts(products.map((p) => p.id)));
+    return Response.json({ products: products.map((p) => ({ ...p, variants: vmap.get(p.id) ?? [] })) });
   });
 }
 
@@ -48,6 +51,11 @@ export async function POST(req: Request) {
         isActive: b.isActive !== false,
       },
     });
-    return Response.json({ product }, { status: 201 });
+    // M5: variantes créées avec le produit
+    let variants: unknown[] = [];
+    if (Array.isArray(b.variants) && b.variants.length) {
+      variants = await saveVariants(product.id, b.variants as { label: string }[]);
+    }
+    return Response.json({ product: { ...product, variants } }, { status: 201 });
   });
 }

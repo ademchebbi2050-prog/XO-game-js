@@ -35,18 +35,18 @@ export default function CartPage() {
       <h1 className="text-xl font-bold">{t("cart.title")}</h1>
       <div className="flex flex-col gap-2">
         {items.map((i) => (
-          <Card key={i.productId} className="flex items-center gap-3">
+          <Card key={`${i.productId}::${i.variantId ?? ""}`} className="flex items-center gap-3">
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-semibold">{i.name}</p>
               <p className="text-xs text-text-muted"><Price minor={i.priceMinor} /></p>
             </div>
             <div className="flex items-center rounded-md border border-border-input">
-              <button aria-label="-" onClick={() => setQty(slug, i.productId, i.qty - 1)} className="h-10 w-10 font-bold">−</button>
+              <button aria-label="-" onClick={() => setQty(slug, i.productId, i.qty - 1, i.variantId)} className="h-10 w-10 font-bold">−</button>
               <span className="ltr-island w-8 text-center text-sm font-bold">{i.qty}</span>
-              <button aria-label="+" onClick={() => setQty(slug, i.productId, i.qty + 1)} className="h-10 w-10 font-bold">+</button>
+              <button aria-label="+" onClick={() => setQty(slug, i.productId, i.qty + 1, i.variantId)} className="h-10 w-10 font-bold">+</button>
             </div>
             <Price minor={i.priceMinor * i.qty} className="text-sm font-bold" />
-            <button aria-label={t("cart.remove")} onClick={() => removeFromCart(slug, i.productId)} className="h-10 w-10 text-danger">
+            <button aria-label={t("cart.remove")} onClick={() => removeFromCart(slug, i.productId, i.variantId)} className="h-10 w-10 text-danger">
               <Trash2 className="mx-auto h-4 w-4" />
             </button>
           </Card>

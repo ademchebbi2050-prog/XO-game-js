@@ -57,11 +57,31 @@ export async function POST(req: Request) {
       where: { id: { in: productIds }, storeId: store.id },
     });
     const byId = new Map(products.map((p) => [p.id, p]));
+    // M5: variantes
+    const variantIds = items.map((i) => String((i as { variantId?: unknown }).variantId ?? "")).filter(Boolean);
+    const vmap = new Map<string, { id: string; product_id: string; label: string; price_delta_minor: number }>();
+    if (variantIds.length) {
+      const vrows = await prisma.$queryRawUnsafe<{ id: string; product_id: string; label: string; price_delta_minor: number }[]>(
+        `select id, product_id, label, price_delta_minor from product_variants where id = any($1::uuid[]) and is_active = true`,
+        variantIds as unknown as string[]
+      );
+      for (const v of vrows) vmap.set(v.id, v);
+    }
     const normItems = items.map((i) => {
       const p = byId.get(String(i.productId ?? ""));
       const qty = Number(i.qty ?? 1);
       if (!p || !Number.isInteger(qty) || qty <= 0) throw new Error("ITEM_INVALID");
-      return { productId: p.id, name: p.name, priceMinor: p.priceMinor, qty };
+      const vid = String((i as { variantId?: unknown }).variantId ?? "");
+      const v = vid ? vmap.get(vid) : undefined;
+      if (vid && (!v || v.product_id !== p.id)) throw new Error("VARIANT_INVALID");
+      return {
+        productId: p.id,
+        variantId: v?.id ?? null,                       // M5
+        variantLabel: v?.label ?? null,                 // M5
+        name: v ? `${p.name} — ${v.label}` : p.name,
+        priceMinor: p.priceMinor + (v ? Number(v.price_delta_minor) : 0),
+        qty,
+      };
     });
 
     const rate = await prisma.deliveryRate.findUnique({

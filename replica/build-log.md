@@ -123,3 +123,10 @@ Livré et testé contre le serveur de prod local :
   `node tests/isolation/run.mjs` (serveur lancé, RLS actif).
 - **Prod domaine**: wildcard DNS `*.<domaine>` + TLS (Let's Encrypt) à prévoir au déploiement —
   mémo, hors build local.
+
+## 2026-11-05 — M5 (backlog)
+- schema.sql: enums `payment_method +'card'`, `payment_status +'failed'`; `product_variants`, `psp_transactions`, `push_subscriptions`, `push_events`; `order_items.variant_id/variant_label`. Migration idempotente `clone/scripts/migrate-m5.mjs` (hook run-all). RLS FORCE sur les 4 nouvelles tables (schema-rls.sql).
+- client Prisma patché localement (`scripts/patch-prisma-m5.mjs`, postinstall) car `prisma generate` est impossible hors-ligne (schema-engine non téléchargeable) — nouvelles tables en SQL brut (`lib/psp.ts`, `lib/variants.ts`, `lib/push.ts`).
+- PSP simulé SimPSP: checkout carte → `/pay/<ref>` → confirm approve/fail (idempotent) → webhook HMAC `/api/webhooks/psp` → remboursement. Variantes: prix/stock/snapshot + éditeur dashboard. Thèmes: presets + couleurs → CSS vars SSR par sous-domaine. Push: subscribe + outbox émise au changement de statut. Commission: bps en settings + stats commission/net.
+- UI: checkout (choix paiement), page `/pay/[ref]`, sélecteur variantes fiche produit, Réglages (thème + commission), `/app/notifications` (+ nav), détail commande (méthode paiement + remboursement), dashboard (cartes commission/net). i18n FR/AR.
+- Tests: e2e F07–F11 ajoutés → **57/57 PASS**; isolation 20/20 PASS (12 tables RLS); tsc clean; build OK. Bugs corrigés: `$executeRawUnsafe` renvoie un count (pas les lignes) → stock variante non vérifié (corrigé en `$queryRawUnsafe`); webhook signé mais body double-encodé côté test.

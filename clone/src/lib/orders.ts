@@ -1,5 +1,7 @@
 import { prisma } from "@/lib/db";
-import { OrderStatus, Prisma } from "@/generated/prisma/client";
+import { OrderStatus, PaymentMethod, Prisma } from "@/generated/prisma/client";
+import { decrementVariantStock, restockVariant } from "@/lib/variants";
+import { emitPushEvent } from "@/lib/push";
 
 // Transitions valides (architecture §3). Jamais de changement de statut en direct.
 const TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
@@ -25,10 +27,22 @@ export async function nextOrderNumber(): Promise<string> {
   return "CMD-" + rows[0].nextval.padStart(6, "0");
 }
 
+const STATUS_LABEL: Record<string, { fr: string; ar: string }> = {
+  new: { fr: "Nouvelle", ar: "جديدة" },
+  to_confirm: { fr: "À confirmer", ar: "للتأكيد" },
+  unreachable: { fr: "Injoignable", ar: "غير قابل للوصول" },
+  confirmed: { fr: "Confirmée", ar: "مؤكدة" },
+  shipped: { fr: "Expédiée", ar: "أُرسلت" },
+  delivered: { fr: "Livrée", ar: "وُصلت" },
+  returned: { fr: "Retournée", ar: "مُرجعة" },
+  cancelled: { fr: "Annulée", ar: "ملغاة" },
+};
+
 /**
  * Change de statut dans UNE transaction: history + effets de bord.
- * - cancelled | returned => remise en stock (une fois, garde `restocked`)
+ * - cancelled | returned => remise en stock (une fois, garde `restocked`) — variante comprise (M5)
  * - delivered => payment_status = 'paid' (COD encaissé)
+ * - M5: émet une notification push (simulée) vers les abonnés de la boutique
  */
 export async function applyStatusChange(opts: {
   orderId: string;
@@ -46,8 +60,17 @@ export async function applyStatusChange(opts: {
     if (!canTransition(order.status, to)) throw new Error("INVALID_TRANSITION");
 
     if ((to === "cancelled" || to === "returned") && !order.restocked) {
+      // M5: remise en stock de la variante si la ligne en avait une
+      const variantRows = await tx.$queryRawUnsafe<{ id: string; variant_id: string | null; qty: number }[]>(
+        "select id, variant_id, qty from order_items where order_id = $1", order.id
+      );
+      for (const row of variantRows) {
+        if (row.variant_id) {
+          await restockVariant(tx, row.variant_id, row.qty);
+        }
+      }
       for (const item of order.items) {
-        if (item.productId) {
+        if (item.productId && !variantRows.find((v) => v.id === item.id && v.variant_id)) {
           await tx.product.update({
             where: { id: item.productId },
             data: { stock: { increment: item.qty } },
@@ -67,6 +90,15 @@ export async function applyStatusChange(opts: {
     await tx.orderStatusHistory.create({
       data: { orderId: order.id, status: to, note: note ?? null, changedById: userId ?? null },
     });
+    // M5: push simulée (dans la même transaction; GUC store_id déjà posé)
+    const label = STATUS_LABEL[to]?.fr ?? to;
+    await emitPushEvent({
+      storeId,
+      title: `Commande ${order.number}`,
+      body: `Statut : ${label}`,
+      url: `/app/orders/${order.id}`,
+      tx,
+    });
     return updated;
   });
 }
@@ -84,6 +116,15 @@ export async function maybeMarkUnreachable(orderId: string, storeId: string, use
   }
 }
 
+export type OrderItemInput = {
+  productId: string | null;
+  variantId?: string | null;   // M5
+  variantLabel?: string | null; // M5 (snapshot)
+  name: string;
+  priceMinor: number;
+  qty: number;
+};
+
 /** Crée une commande (web ou manuelle) dans une transaction: stock conditionnel + totaux. */
 export async function createOrderWithItems(opts: {
   storeId: string;
@@ -92,9 +133,10 @@ export async function createOrderWithItems(opts: {
   customerPhone: string;
   governorate: string;
   address: string;
-  items: { productId: string | null; name: string; priceMinor: number; qty: number }[];
+  items: OrderItemInput[];
   deliveryFeeMinor: number;
   idempotencyKey?: string | null;
+  paymentMethod?: PaymentMethod; // M5: 'cod' (défaut) | 'card'
 }) {
   const { storeId, items, deliveryFeeMinor, idempotencyKey } = opts;
   if (!items.length) throw new Error("EMPTY_ORDER");
@@ -106,8 +148,13 @@ export async function createOrderWithItems(opts: {
       const existing = await tx.order.findUnique({ where: { idempotencyKey } });
       if (existing) return { order: existing, replayed: true };
     }
-    // stock conditionnel (anti-oversell)
+    // stock conditionnel (anti-oversell) — M5: variante prioritaire si variantId
     for (const it of items) {
+      if (it.variantId && it.productId) {
+        const n = await decrementVariantStock(tx, it.variantId, it.productId, storeId, it.qty);
+        if (n === 0) throw new Error("OUT_OF_STOCK:" + it.name);
+        continue;
+      }
       if (!it.productId) continue;
       const res = await tx.product.updateMany({
         where: { id: it.productId, storeId, stock: { gte: it.qty } },
@@ -135,26 +182,26 @@ export async function createOrderWithItems(opts: {
         deliveryFeeMinor,
         discountMinor: 0,
         totalMinor: total,
-        paymentMethod: "cod",
+        paymentMethod: opts.paymentMethod ?? "cod", // M5: 'card' possible (enum patché)
         paymentStatus: "pending",
         status: "new",
         source: opts.source,
         idempotencyKey: idempotencyKey ?? null,
-        items: {
-          create: items.map((it) => ({
-            productId: it.productId,
-            nameSnapshot: it.name,
-            priceMinor: it.priceMinor,
-            qty: it.qty,
-          })),
-        },
       },
-      include: { items: true },
     });
+    // M5: lignes de commande en SQL brut (colonnes variant_id/variant_label inconnues du client Prisma)
+    for (const it of items) {
+      await tx.$executeRawUnsafe(
+        `insert into order_items (order_id, product_id, variant_id, variant_label, name_snapshot, price_minor, qty)
+         values ($1, $2, $3, $4, $5, $6, $7)`,
+        order.id, it.productId, it.variantId ?? null, it.variantLabel ?? null, it.name, it.priceMinor, it.qty
+      );
+    }
+    const withItems = await tx.order.findUnique({ where: { id: order.id }, include: { items: true } });
     await tx.orderStatusHistory.create({
       data: { orderId: order.id, status: "new", note: opts.source === "web" ? "Commande web" : "Commande manuelle" },
     });
-    return { order, replayed: false };
+    return { order: withItems ?? order, replayed: false };
   });
 }
 

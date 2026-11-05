@@ -11,5 +11,7 @@ export async function GET(_req: Request, ctx: { params: Promise<{ slug: string; 
     select: { id: true, name: true, description: true, priceMinor: true, stock: true, imageUrl: true, category: { select: { name: true, slug: true } } },
   });
   if (!product) return Response.json({ error: "NOT_FOUND" }, { status: 404 });
-  return Response.json({ product });
+  // M5: variantes actives du produit
+  const variants = await import("@/lib/variants").then((m) => m.listVariants(product.id).then((vs) => vs.filter((v) => v.isActive)));
+  return Response.json({ product: { ...product, variants } });
 }

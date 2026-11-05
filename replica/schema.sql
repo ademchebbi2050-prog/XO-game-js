@@ -24,8 +24,8 @@ create type order_status as enum (
 );
 
 create type call_outcome as enum ('answered', 'no_answer', 'busy', 'whatsapp');
-create type payment_method as enum ('cod');          -- 'card' ajouté plus tard (PSP)
-create type payment_status as enum ('pending', 'paid', 'refunded');
+create type payment_method as enum ('cod', 'card');   -- M5: 'card' = PSP simulé (psp_transactions)
+create type payment_status as enum ('pending', 'paid', 'failed', 'refunded');  -- M5: 'failed' = paiement refusé
 create type store_status   as enum ('draft', 'published');
 create type order_source   as enum ('web', 'manual');
 
@@ -151,6 +151,22 @@ create index on products (store_id, is_active);
 create index on products (category_id);
 
 -- ----------------------------------------------------------------------------
+-- Variantes de produits (M5) — ex. taille/couleur, avec stock et delta de prix
+-- ----------------------------------------------------------------------------
+create table product_variants (
+  id                 uuid primary key default gen_random_uuid(),
+  product_id         uuid not null references products(id) on delete cascade,
+  label              text not null,                       -- ex. "M", "Rouge"
+  sku                text,
+  price_delta_minor  integer not null default 0,          -- +/- en millimes TND
+  stock              integer not null default 0 check (stock >= 0),
+  is_active          boolean not null default true,
+  created_at         timestamptz not null default now(),
+  unique (product_id, label)
+);
+create index on product_variants (product_id);
+
+-- ----------------------------------------------------------------------------
 -- Commandes (cœur du clone: boucle COD)
 -- ----------------------------------------------------------------------------
 create sequence if not exists order_number_seq;  -- numéro lisible: CMD-000123
@@ -196,12 +212,15 @@ create table order_items (
   id            uuid primary key default gen_random_uuid(),
   order_id      uuid not null references orders(id) on delete cascade,
   product_id    uuid references products(id) on delete set null,  -- snapshot conservé si produit supprimé
+  variant_id    uuid references product_variants(id) on delete set null,  -- M5: variante choisie (snapshot aussi)
+  variant_label text,                                          -- M5: libellé figé (ex. "M")
   name_snapshot text not null,
-  price_minor   integer not null check (price_minor >= 0),
+  price_minor   integer not null check (price_minor >= 0),    -- prix final unité (base + delta variante)
   qty           integer not null check (qty > 0)
 );
 create index on order_items (order_id);
 create index on order_items (product_id);
+create index on order_items (variant_id);
 
 create table order_status_history (
   id            uuid primary key default gen_random_uuid(),
@@ -244,6 +263,51 @@ create table blocked_phone_numbers (
   created_at timestamptz not null default now()
 );
 -- Vérifié par POST /api/public/stores/[slug]/orders AVANT création -> HTTP 403
+
+-- ----------------------------------------------------------------------------
+-- M5 — PSP carte bancaire SIMULÉ (SimPSP) : transactions de paiement
+-- ----------------------------------------------------------------------------
+create table psp_transactions (
+  id           uuid primary key default gen_random_uuid(),
+  order_id     uuid not null references orders(id) on delete cascade,
+  psp_code     text not null default 'simpsp',
+  psp_ref      text not null unique,              -- ex. PSP-8F3K2Q (id côté PSP)
+  amount_minor integer not null check (amount_minor > 0),
+  currency     text not null default 'TND',
+  status       text not null default 'pending'    -- pending|paid|failed|refunded
+               check (status in ('pending','paid','failed','refunded')),
+  auth_code    text,                               -- code d'autorisation renvoyé par le PSP
+  payload      jsonb not null default '{}',        -- événements webhook reçus (idempotence)
+  created_at   timestamptz not null default now(),
+  updated_at   timestamptz not null default now()
+);
+create index on psp_transactions (order_id);
+
+-- ----------------------------------------------------------------------------
+-- M5 — Notifications push (simulées, sans service worker en local) :
+-- abonnements + file d'événements envoyés (outbox consultable au dashboard)
+-- ----------------------------------------------------------------------------
+create table push_subscriptions (
+  id         uuid primary key default gen_random_uuid(),
+  store_id   uuid not null references stores(id) on delete cascade,
+  user_id    uuid references users(id) on delete cascade,
+  endpoint   text not null unique,                -- en prod: URL push browser; en local: sim://device/<uuid>
+  keys       jsonb not null default '{}',         -- p256dh/auth (prod)
+  created_at timestamptz not null default now()
+);
+create table push_events (
+  id              uuid primary key default gen_random_uuid(),
+  store_id        uuid not null references stores(id) on delete cascade,
+  subscription_id uuid references push_subscriptions(id) on delete set null,
+  title           text not null,
+  body            text not null,
+  url             text,
+  status          text not null default 'sent' check (status in ('sent','failed')),
+  created_at      timestamptz not null default now(),
+  sent_at         timestamptz
+);
+create index on push_events (store_id, created_at desc);
+create index on push_subscriptions (store_id);
 
 -- ----------------------------------------------------------------------------
 -- Vue dashboard (stats M3): taux de confirmation / livraison / retour, CA

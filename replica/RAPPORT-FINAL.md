@@ -54,3 +54,22 @@ http://boutique-a.localhost:3000/ et http://boutique-b.localhost:3000/.
 
 `/replica-test` (plan de test F01–F06 + e2e Playwright) puis backlog M5 si souhaité :
 PSP en ligne, codes promo, variantes produit, thèmes no-code, notifications push.
+
+
+---
+
+## M5 — Backlog (livré 2026-11-05)
+
+| Fonctionnalité | Implémentation | Preuve |
+|---|---|---|
+| **Paiement carte PSP** | SimPSP simulé: `payment_method 'card'`, table `psp_transactions`, hosted-checkout `/pay/<ref>` (Payer/Refuser), webhook `/api/webhooks/psp` signé HMAC (idempotent via `payload`), remboursement `/api/orders/[id]/refund`. En prod: remplacer par Flouci/Paymee/CIB (même contrat webhook). | e2e F07 (7 contrôles) |
+| **Variantes produits** | Table `product_variants` (label, sku, `price_delta_minor`, stock propre), sélecteur sur la fiche produit, prix = base + delta, stock décrémenté sur la variante, snapshot `variant_id`/`variant_label` en commande, remise en stock variante à l'annulation/retour, éditeur de variantes (upsert/suppression) dans le dashboard. | e2e F08 (6 contrôles) |
+| **Thèmes no-code** | 4 presets (terre/nuit/pastel/olive) + couleurs libres (accent/fond/texte) dans Réglages, stockés dans `stores.settings.theme`, injectés en variables CSS sur `:root` par sous-domaine (SSR) — Tailwind `@theme inline` suit. Aperçu en direct dans le dashboard. | e2e F09 (4 contrôles) |
+| **Notifications push** | Abonnements (`push_subscriptions`, endpoint `sim://…` en local, Web Push VAPID en prod) + outbox `push_events`; émission à chaque changement de statut de commande (dans la transaction), page `/app/notifications`. | e2e F10 (3 contrôles) |
+| **Commission / pricing** | `stores.settings.commissionBps` (seed 500 = 5 %), stats dashboard: `commissionMinor = floor(CA livré × bps / 10000)`, `netMinor`; cartes Commission/Net au dashboard; champ éditable dans Réglages. | e2e F11 (2 contrôles) |
+
+**Contraintes M5**: client Prisma non regénérable hors-ligne (schema-engine bloqué) → enums patchés dans le client généré (`scripts/patch-prisma-m5.mjs`, postinstall) et nouvelles tables accédées en SQL brut; migration idempotente `scripts/migrate-m5.mjs` (hookée dans `run-all.mjs`); RLS FORCE sur les 4 nouvelles tables (`product_variants`, `psp_transactions`, `push_subscriptions`, `push_events`).
+
+**Tests**: e2e `tests/e2e/run.mjs` F01–F11 = **57/57 PASS**; isolation M4 **20/20 PASS** (RLS inclut désormais 12 tables); `tsc` clean; `next build` OK. 2 bugs trouvés et corrigés par la suite: stock variante (count vs lignes) et rate-limit des re-runs de test (IP/téléphone aléatoires).
+
+**features.csv**: 27 yes / 5 partial / 23 no (était 23/4/28 avant M5).

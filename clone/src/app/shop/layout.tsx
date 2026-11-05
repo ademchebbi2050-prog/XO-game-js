@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import { StoreProvider } from "@/components/store-provider";
 import { LangSwitch } from "@/components/ui";
 import { getStoreBySlug } from "@/lib/tenant";
+import { resolveTheme, themeToCssVars } from "@/lib/theme";
 
 export const dynamic = "force-dynamic";
 
@@ -17,8 +18,12 @@ export default async function ShopLayout({ children }: { children: React.ReactNo
   const store = await getStoreBySlug(slug);
   if (!store || store.status !== "published") notFound();
 
+  // M5: thème no-code de la boutique -> variables CSS sur :root (côté serveur,
+  // par hôte de boutique: chaque sous-domaine sert son propre thème)
+  const themeCss = `:root{ ${themeToCssVars(resolveTheme(store.settings))} }`;
   return (
     <StoreProvider slug={store.slug} name={store.name}>
+      <style dangerouslySetInnerHTML={{ __html: themeCss }} />
       <div className="flex min-h-dvh flex-col bg-bg">
         <header className="sticky top-0 z-20 flex h-14 items-center gap-3 border-b border-border bg-surface px-4">
           <Link href="/shop" className="text-lg font-extrabold text-accent">{store.name}</Link>
